@@ -1,7 +1,10 @@
 
 ===================================================================
- 5 Sept. 2017:   ngVLA Configuration Material 
+ 9  Dec. 2017:   ngVLA Configuration Material 
 ===================================================================
+
+Update from 5 Sept. 2017:
+       - Corrected error with shortest baseline being smaller than a dish diameter.  
 
 Summary:
 --------------------------------
