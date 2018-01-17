@@ -1,4 +1,8 @@
-git clone https://github.com/astroumd/SSINGMA
+Our repository is at: git clone https://github.com/astroumd/SSINGMA
+
+Scripts will probably use CASA, but if this winds up to be too slow, we
+could also look at OSKAR (which can write MS files)
 
 
 CASA:  https://casa.nrao.edu/casa_obtaining.shtml
+OSKAR: https://github.com/OxfordSKA/OSKAR
