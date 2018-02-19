@@ -1,20 +1,9 @@
 #! /bin/csh -f
 #
-#  mkvelfie3:    make a velocity field with double smoothing and noise
+#  mkgalcube:   make a galaxy cube in FITS format
 #
 #  
 #  needs NEMO
-#  needs ds9    (make 4 frames for:  mom0, mom1, mom2, pv)
-#
-#  pgplot:
-#  1 mom=1 particle based
-#  2 mom=1 particle based - with density deconvolution (not good)
-#  3 mom=1 cube based
-#  4 mom=3
-#  5 mom=31 peak=0
-#  6 mom=31 peak=1
-#  10   model fit to rotcur, not actually worthwhile
-#  11   HI-profile
 
 #  parameters, can be changed by the user via the commandline
 set run=model1             # identification, and basename for all files
@@ -78,11 +67,10 @@ echo Creating homogeneous disk with $nbody particles times
 
 mkdisk out=- nbody=$nbody seed=$seed z0=$z0,$z1 vloss=$vloss \
        potname=rotcur0 potpars=0,$r0,$v0 mass=1 sign=-1 frac=$frac rmax=$rmax |\
-       snapmass - - mass="1/(r+0.001)" |\
+    snapmass - - mass="1/(r+0.001)" |\
     snaprotate - $run.20 "$inc,$pa" yz
 
 
-echo "Creating a velocity field - method 1"
 snapgrid $run.20 $run.21 $grid_pars moment=0 evar=m
 snapgrid $run.20 $run.22 $grid_pars moment=1 evar=m
 snapgrid $run.20 $run.23 $grid_pars moment=2 evar=m
@@ -127,75 +115,8 @@ ccdmom $run.32 $run.35v axis=3 mom=31 peak=0 clip=$clip
 ccdmom $run.32 $run.36v axis=3 mom=31 peak=1 clip=$clip  # peak
 
 
-# PV slice based on $nsize/2
-ccdslice $run.31 - y $nsize/2-1:$nsize/2 | ccdmom - $run.pv 3 -1
-
-
-xpaset -p ds9 frame frameno 1
-#nds9 $run.21d
-nds9 $run.33d
-xpaset -p ds9 frame frameno 2
-#nds9 $run.21v
-nds9 $run.33v
-xpaset -p ds9 frame frameno 3
-#nds9 $run.21s
-nds9 $run.33s
-xpaset -p ds9 frame frameno 4
-nds9 $run.pv
-
-
-
-# single dish profile ('the busy function')
-# http://adsabs.harvard.edu/abs/2014MNRAS.438.1176W
-# https://github.com/RussellJurek/busy-function-fitting
-ccdmom $run.32 - axis=1 mom=0 |\
- ccdmom - - axis=2 mom=0 |\
-  ccdprint - x= y= z= label=z newline=t |\
-  tabcomment - - punct=f delete=t > $run.spec
-
 # export for barolo or so, in decent units (could also use ccdsky)
 # for ALMA at (12h,-30d)
 ccdfits $run.32 $run.fits radecvel=t scale=1/60.0/8,1/60.0/8,1000.0 vsys=1000 crpix=$nsize/2+1,$nsize/2+1,$nvel/2+1 crval=180,-30,0
-# rotcur
-
-rotcur $run.21v 0:250:10 0:100:20 90 $inc 0 63.5,63.5 units=arcmin fixed=vsys,pa,inc,xpos,ypos tab=$run.rotcur1 beam="$beam*60.0"
-rotcur $run.21v 0:250:10 0:100:20 90 $inc 0 63.5,63.5 units=arcmin fixed=vsys,pa,inc,xpos,ypos tab=$run.rotcur2 beam="$beam*60.0" dens=$run.21d
-rotcur $run.33v 0:250:10 0:100:20 90 $inc 0 63.5,63.5 units=arcmin fixed=vsys,pa,inc,xpos,ypos tab=$run.rotcur3 beam="$beam*60.0"
-rotcur $run.34v 0:250:10 0:100:20 90 $inc 0 63.5,63.5 units=arcmin fixed=vsys,pa,inc,xpos,ypos tab=$run.rotcur4 beam="$beam*60.0"
-rotcur $run.35v 0:250:10 0:100:20 90 $inc 0 63.5,63.5 units=arcmin fixed=vsys,pa,inc,xpos,ypos tab=$run.rotcur5 beam="$beam*60.0"
-rotcur $run.36v 0:250:10 0:100:20 90 $inc 0 63.5,63.5 units=arcmin fixed=vsys,pa,inc,xpos,ypos tab=$run.rotcur6 beam="$beam*60.0"
 
 
-echo "0 0 0 0 0 90.00  0 60.00  0  63.50 0 63.50  0  0 0" > $run.rotcurtab1
-echo "0 0 0 0 0 90.00  0 60.00  0  63.50 0 63.50  0  0 0" > $run.rotcurtab2
-tabcomment $run.rotcur1 - delete=t >> $run.rotcurtab1
-tabcomment $run.rotcur2 - delete=t >> $run.rotcurtab2
-tabcomment $run.rotcur3 - delete=t >> $run.rotcurtab3
-tabcomment $run.rotcur4 - delete=t >> $run.rotcurtab4
-tabcomment $run.rotcur5 - delete=t >> $run.rotcurtab5
-tabcomment $run.rotcur6 - delete=t >> $run.rotcurtab6
-
-    
-tabplot $run.rotcurtab1 1 4 dycol=5 line=1,1 point=2,0.1 xmin=0 ymin=0 ymax=120 xmax=240 ycoord=100 xcoord="$beam*60.0" yapp=1/xs
-tabplot $run.rotcurtab2 1 4 dycol=5 line=1,1 point=2,0.1 xmin=0 ymin=0 ymax=120 xmax=240 ycoord=100 xcoord="$beam*60.0" yapp=2/xs
-tabplot $run.rotcurtab3 1 4 dycol=5 line=1,1 point=2,0.1 xmin=0 ymin=0 ymax=120 xmax=240 ycoord=100 xcoord="$beam*60.0" yapp=3/xs
-tabplot $run.rotcurtab4 1 4 dycol=5 line=1,1 point=2,0.1 xmin=0 ymin=0 ymax=120 xmax=240 ycoord=100 xcoord="$beam*60.0" yapp=4/xs
-tabplot $run.rotcurtab5 1 4 dycol=5 line=1,1 point=2,0.1 xmin=0 ymin=0 ymax=120 xmax=240 ycoord=100 xcoord="$beam*60.0" yapp=5/xs
-tabplot $run.rotcurtab6 1 4 dycol=5 line=1,1 point=2,0.1 xmin=0 ymin=0 ymax=120 xmax=240 ycoord=100 xcoord="$beam*60.0" yapp=6/xs
-
-head -5 $run.rotcurtab1 | tabnllsqfit - 1 4 par=0,1 free=0,1
-
-# fit a exponential growth  y=p0*(exp(x/p1)-1)
-tabnllsqfit $run.rotcurtab1 1 4 fit=grow par=100,60 free=1,1 out=$run.fit
- tabmath $run.fit - %2-%3 |\
- tabplot - 1 2,3,4 color=2,3,4 line=1,1 ycoord=0 xcoord=0 yapp=10/xs
-
-# simulate global HI profile
-tabplot $run.spec line=1,1 xmin=-120 xmax=120 ymin=0 yapp=11/xs 
-
-
-# magic output
-
-set magic = (`tail $run.rotcurtab1 | head -8 | tabstat - 4 | egrep '(mean|disp)' | awk '{print $2}'`)
-
-echo MAGIC: $z0 $z1 $inc $v0 $magic
