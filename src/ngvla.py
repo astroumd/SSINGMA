@@ -103,7 +103,7 @@ def ng_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=Fa
     
         
     if not NG.iscasa(image):
-        print "QTP_STATS: missing %s " % image
+        print "NG_STATS: missing %s " % image
         return
     if NG.iscasa(image + '/ANTENNA'):                      # assume it's a MS
         tb.open(image)
@@ -163,14 +163,14 @@ def ng_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=Fa
             else:
                 test_out = "FAILED regression delta=%g > %g" % (delta.max(),eps)
                 report = True
-    msg1 = "QTP_STATS: %s" % (image)
+    msg1 = "NG_STATS: %s" % (image)
     print "%s %s %s" % (msg1,test_new,test_out)
     if report:
         fmt1 = '%%-%ds' % (len(msg1))
         msg2 = fmt1 % ' '
         print "%s %s EXPECTED" % (msg2,test)
     
-    #-end of qtp_stats()
+    #-end of ng_stats()
     
 def ng_beam(im, normalized=False, plot=None):
     """ some properties of the PSF
@@ -182,7 +182,7 @@ def ng_beam(im, normalized=False, plot=None):
     @todo   have an option to just print beam, no volume info
     """
     if not NG.iscasa(im):
-        print "QTP_BEAM: missing %s " % im
+        print "NG_BEAM: missing %s " % im
         return
 
     h0 = imhead(im)
@@ -209,7 +209,7 @@ def ng_beam(im, normalized=False, plot=None):
         factor = 1.0
         pix    = 1.0
 
-    print "QTP_BEAM: %s  %g %g %g %g %g" % (im,bmaj,bmin,pix,nppb,factor)
+    print "NG_BEAM: %s  %g %g %g %g %g" % (im,bmaj,bmin,pix,nppb,factor)
 
     xcen = h0['refpix'][0]
     ycen = h0['refpix'][1]
@@ -222,7 +222,7 @@ def ng_beam(im, normalized=False, plot=None):
     for i in size:
         box = '%d,%d,%d,%d' % (xcen-i,ycen-i,xcen+i,ycen+i)
         flux[i] = imstat(im,chans='0',box=box)['sum'][0]/factor
-    print "QTP_BEAM: Max/Last/PeakLoc",flux.max(),flux[-1],flux.argmax()*pix
+    print "NG_BEAM: Max/Last/PeakLoc",flux.max(),flux[-1],flux.argmax()*pix
     
     if plot != None:
         plt.figure()
@@ -240,7 +240,7 @@ def ng_beam(im, normalized=False, plot=None):
         plt.savefig(plot)
         plt.show()
     
-    #-end of qtp_beam()
+    #-end of ng_beam()
     
     
 def ng_getuv(ms, kwave=True):
@@ -251,7 +251,7 @@ def ng_getuv(ms, kwave=True):
     kwave    boolean, if true (u,v) in klambda, else in native meter
              Default:  True
 
-    Usage:   (u,v) = qtp_getuv('msfile',True)
+    Usage:   (u,v) = ng_getuv('msfile',True)
     """
     tb.open(ms)
     uvw  = tb.getcol('UVW')
@@ -274,7 +274,7 @@ def ng_getuv(ms, kwave=True):
 
     return (u,v)
 
-    #-end of qtp_getuv()
+    #-end of ng_getuv()
     
 def ng_getamp(ms, record=0):
     """ return the AMP for each channel for the (0,0) spacings.
@@ -282,7 +282,7 @@ def ng_getamp(ms, record=0):
 
     ms       MS file, No default
     
-    Usage:   amp = qtp_getamp('msfile')
+    Usage:   amp = ng_getamp('msfile')
     """
     tb.open(ms)
     uvw  = tb.getcol('UVW')[0:2,:]               # uvw[2,nvis]
@@ -295,7 +295,7 @@ def ng_getamp(ms, record=0):
     tb.close()
     return amp
 
-    #-end of qtp_getamp()
+    #-end of ng_getamp()
     
     
 def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None):
@@ -385,7 +385,88 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
         if do_fits:
             exportfits(outim+'.image',outim+'.fits')
 
-    #-end of qtp_alma()
+    #-end of ng_alma()
+
+    
+def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=None, niter=-1, ptg = None):
+    """
+    helper function to create an MS from a skymodel for a given ngVLA configuration
+    Example ngVLA  configurations:
+
+    SWcore.cfg
+    SW214.cfg
+    SWVLB.cfg
+    """
+
+    # since we call it incrementally, make sure directory exists
+    os.system('mkdir -p %s' % project)
+    
+    print "CFG: ",cfg
+
+
+    # for tclean (only used if niter>=0)
+    imsize    = NG.imsize2(imsize)
+    cell      = ['%garcsec' % pixel]
+    outms     = '%s/%s.%s.ms' % (project,project,cfg)
+    outim     = '%s/dirtymap' % (project)
+    do_fits   = True       # always output fits when you clean
+
+
+    if ptg != None:
+        setpointings = False
+        ptgfile      = ptg
+    # obsmode     = "int"
+    antennalist = "%s.cfg" % cfg     # can this be a list?
+
+    totaltime   = "28800s"     # 4 hours  (should be multiple of 2400 ?)
+    integration = "30s"        # prevent too many samples for MS
+
+    thermalnoise= ""
+    verbose     = True
+    overwrite   = True
+    graphics    = "file"       # "both" would do "screen" as well
+    user_pwv    = 0.0
+
+    # we allow accumulation now ..
+    # ...make sure old directory is gone
+    # ...os.system("rm -rf %s" % project)
+
+    if ptg == None:
+        simobserve(project, skymodel,
+               integration=integration,
+               totaltime=totaltime,
+               antennalist=antennalist,
+               verbose=verbose, overwrite=overwrite,
+               user_pwv = 0.0, thermalnoise= "")
+    else:
+        simobserve(project, skymodel,
+               setpointings=False, ptgfile=ptgfile,
+               integration=integration,
+               totaltime=totaltime,
+               antennalist=antennalist,
+               verbose=verbose, overwrite=overwrite,                   
+               user_pwv = 0.0, thermalnoise= "")
+
+    if niter >= 0:
+        cmd1 = 'rm -rf %s.*' % outim
+        os.system(cmd1)
+        tclean(vis=outms,
+               imagename=outim,
+               niter=niter,
+               gridder='mosaic',
+               imsize=imsize,
+               cell=cell,
+               restoringbeam  = restoringbeam,
+               stokes='I',
+               pbcor=True,
+               phasecenter=phasecenter,
+               weighting='natural',
+               specmode='cube')
+        ng_stats(outim + '.image')
+        if do_fits:
+            exportfits(outim+'.image',outim+'.fits')
+
+    #-end of ng_vla()
 
 def ng_tpdish(name, size):
     """
@@ -393,15 +474,15 @@ def ng_tpdish(name, size):
 
     E.g. for GBT (a 100m dish) you would need to do:
 
-    qtp_tpdish('ALMATP',100.0)
-    qtp_tpdish('VIRTUAL',100.0)
+    ng_tpdish('ALMATP',100.0)
+    ng_tpdish('VIRTUAL',100.0)
     """
     old_size = t2v_arrays[name]['dish']
     old_fwhm = t2v_arrays[name]['fwhm100']
     r = size/old_size
     t2v_arrays[name]['dish']   = size
     t2v_arrays[name]['fwhm100']= old_fwhm / r
-    print "QTP_DISH: ",old_size, old_fwhm, ' -> ', size, old_fwhm/r
+    print "NG_DISH: ",old_size, old_fwhm, ' -> ', size, old_fwhm/r
     
  
 def ng_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):
@@ -536,7 +617,7 @@ def ng_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasece
     
     exportfits(dirtymap + ".image", dirtymap + ".fits")
 
-    #-end of qtp_tp()
+    #-end of ng_tp()
 
 
 def ng_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", phasecenter="",  **line):
@@ -624,7 +705,7 @@ def ng_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", 
     if len(niters) == 1:
         exportfits(outim1+'.image',outim1+'.fits')
     
-    #-end of qtp_clean1()
+    #-end of ng_clean1()
     
 def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasecenter="", niter=0, do_concat = False, do_alma = False, do_cleanup = True, **line):
     """
@@ -732,7 +813,7 @@ def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasec
         print "Removing ",outms
         shutil.rmtree(outms)
     
-    #-end of qtp_clean()
+    #-end of ng_clean()
     
 def ng_summary(tp, ms=None, source=None, line=False):
     """
@@ -802,7 +883,7 @@ def ng_summary(tp, ms=None, source=None, line=False):
         return _line
 
     # print the image info
-    print "QTP_SUMMARY:"
+    print "NG_SUMMARY:"
     print "TP:",tp
     print 'OBJECT:  ',h0['object']
     print 'SHAPE:   ',h0['shape']
@@ -857,7 +938,7 @@ def ng_summary(tp, ms=None, source=None, line=False):
         #print "chan_freq",chan_freq.shape,chan_freq
         # print 'FREQ:',chan_freq[0][0]/1e9,chan_freq[-1][0]/1e9,ref_freq[0][0]/1e9
 
-    #-end of qtp_summary()
+    #-end of ng_summary()
 
 def ng_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     """
