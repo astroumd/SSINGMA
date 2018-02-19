@@ -15,7 +15,7 @@
 import os, shutil, math, tempfile
 import os.path
 # from buildmosaic import buildmosaic
-from utils import constutils as const
+# from utils import constutils as const
 import numpy as np
 # import numpy.ma as ma
 # import pyfits as fits
@@ -381,7 +381,7 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
                phasecenter=phasecenter,
                weighting='natural',
                specmode='cube')
-        qtp_stats(outim + '.image')
+        ng_stats(outim + '.image')
         if do_fits:
             exportfits(outim+'.image',outim+'.fits')
 
