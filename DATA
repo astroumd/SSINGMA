@@ -1,0 +1,7 @@
+Model data are in:  ftp://ftp.astro.umd.edu/pub/bima/ngVLA/
+Software in:        https://github.com/astroumd/SSINGMA
+      
+
+
+skymodel.fits    - a model of a GMC, with structure on lots of scales - taken from the TP2VIS project
+
