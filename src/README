@@ -1,5 +1,7 @@
 Examples to try:
 
+NOTE: it is always assumed you have initialize the software using e.g.      execfile('ngvla.py')
+
 #  a CASA simulation
 phasecenter = 'J2000 12:00:00 -30.00.00'
 importfits('skymodel.fits','skymodel.im')
