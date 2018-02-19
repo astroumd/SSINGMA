@@ -1,0 +1,11 @@
+Various ramblings which can or can not go into the discussion in the paper 
+
+
+
+Two ways to get a TP map:
+  - simulating an OTF mapping (just a convolution with the TP beam,
+    but it's not easy to get a TP beam [is it?], so just do a gaussian, which CASA can do)
+    Otherwise use imconvol with the TP beam if you get them.
+  - Take a (hex) grid of nyquist sampled pointings, and resample this into a TP map
+    This is not straightforward and since we do OTF (right?) we dont' need to worry
+
