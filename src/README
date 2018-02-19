@@ -1,8 +1,34 @@
-Examples to try:
+Examples to get started:
 
 NOTE: it is always assumed you have initialize the software using e.g.      execfile('ngvla.py')
 
-#  a CASA simulation
-phasecenter = 'J2000 12:00:00 -30.00.00'
-importfits('skymodel.fits','skymodel.im')
-ng_alma('test1','skymodel.im',phasecenter=phasecenter,cfg=0,niter=0)
+##  a CASA simulation
+
+   phasecenter = 'J2000 12:00:00 -30.00.00'
+   importfits('skymodel.fits','skymodel.im')
+   ng_alma('test1','skymodel.im',phasecenter=phasecenter,cfg=0,niter=0)
+   ng_stats('test1/test1.aca.cycle5.ms')
+   -> 
+   ng_stats('test1/dirtymap.image')
+   -> 5.3863743657385914 151.09485838224359 -511.6363525390625 767.088623046875 1187.755927170781 
+
+Although this is not an ngVLA but an (ACA) ALMA simulation, it can be quickly done
+because the ACA only has 10 antennas, and runs in about 2 mins.  The ng_stats is meant to
+provide a regression test
+
+ng_vla('test2','skymodel.im',phasecenter=phasecenter,cfg='SWcore',niter=0)
+
+
+This was running up my memory to 2.8 GB, took 17 mins. to run. Note that this unrealistic field
+is at DEC = -30
+
+## NEMO
+
+Quick example how to install it
+
+     wget https://teuben.github.io/nemo/install_nemo
+     chmod +x install_nemo
+     ./install_nemo nemo=$HOME/opt/nemo
+     source $HOME/opt/nemo/nemo_start.sh
+
+(or .csh if you shell is a csh flavor instead)
