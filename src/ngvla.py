@@ -101,10 +101,9 @@ def ng_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=Fa
         """
         return '\'' + name + '\''
     
-        
-    if not NG.iscasa(image):
-        print "NG_STATS: missing %s " % image
-        return
+
+    NG.assertf(image)
+
     if NG.iscasa(image + '/ANTENNA'):                      # assume it's a MS
         tb.open(image)
         data  = np.abs(tb.getcol('DATA')[0,:,:])  # first pol ->  data[nchan,nvis]
@@ -980,7 +979,7 @@ def ng_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     immoments(imcube, 0, chans=chans3, includepix=[rms*2.0,9999], mask=mask, outfile=mom0)
     immoments(imcube, 1, chans=chans3, includepix=[rms*5.5,9999], mask=mask, outfile=mom1)
 
-def ng_flux(image, box=None, plot='plot5.png'):
+def ng_flux(image, box=None, dv = 1.0, plot='plot5.png'):
     """ Plotting min,max,rms as function of channel
     
         box     xmin,ymin,xmax,ymax       defaults to whole area
@@ -1011,7 +1010,7 @@ def ng_flux(image, box=None, plot='plot5.png'):
     plt.legend()
     plt.savefig(plot)
     plt.show()
-    print "Sum: %g Jy (* unknown km/s)" % (fmax.sum())
+    print "Sum: %g Jy km/s (%g km/s)" % (fmax.sum() * dv, dv)
 
 
 def ng_combine(project, TPdata, INTdata, **kwargs):
