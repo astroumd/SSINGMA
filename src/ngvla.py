@@ -308,6 +308,8 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
     cycle 3:   ALMA cfg = 1..8    ACA ok
     cycle 4:   ALMA cfg = 1..9    ACA ok
     cycle 5:   ALMA cfg = 1..10   ACA ok [same as 4]
+
+    if niter>=0 is chosen, tclean(imagename='dirtyimage') is used, overwriting any previous dirtyimage
     """
 
     # since we call it incrementally, make sure directory exists
@@ -337,8 +339,8 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
     # obsmode     = "int"
     antennalist = "%s.cfg" % cfg     # can this be a list?
 
-    totaltime   = "28800s"     # 4 hours  (should be multiple of 2400 ?)
-    integration = "30s"        # prevent too many samples for MS
+    totaltime   = "14400s"     # 4 hours  (should be multiple of 2400 ?)
+    integration = "60s"        # prevent too many samples for MS
 
     thermalnoise= ""
     verbose     = True
@@ -352,6 +354,7 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
 
     if ptg == None:
         simobserve(project, skymodel,
+               indirection=phasecenter,
                integration=integration,
                totaltime=totaltime,
                antennalist=antennalist,
@@ -359,6 +362,7 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
                user_pwv = 0.0, thermalnoise= "")
     else:
         simobserve(project, skymodel,
+               indirection=phasecenter,                   
                setpointings=False, ptgfile=ptgfile,
                integration=integration,
                totaltime=totaltime,
@@ -707,7 +711,7 @@ def ng_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", 
     
     #-end of ng_clean1()
     
-def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasecenter="", niter=0, do_concat = False, do_alma = False, do_cleanup = True, **line):
+def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasecenter="", niter=0, do_concat = False, do_cleanup = True, **line):
     """
     Simple interface to do a tclean() joint deconvolution of one TP and one or more MS
     
@@ -723,7 +727,6 @@ def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasec
     """
     os.system('rm -rf %s; mkdir -p %s' % (project,project))
     #
-    outim1 = '%s/alma' % project
     outim2 = '%s/tpalma' % project
     outms  = '%s/tpalma.ms' % project       # concat MS to bypass tclean() bug
     #
@@ -746,26 +749,6 @@ def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasec
         niters = niter
     else:
         niters = [niter]
-    #
-    if do_alma:
-        print "Creating ALMA using vis1=",vis1
-        tclean(vis = vis1,
-               imagename      = outim1,
-               niter          = niters[0],
-               gridder        = 'mosaic',
-               imsize         = imsize,
-               cell           = cell,
-               restoringbeam  = restoringbeam,               
-               stokes         = 'I',
-               pbcor          = True,
-               phasecenter    = phasecenter,
-               vptable        = None,
-               weighting      = weighting,
-               specmode       = 'cube',
-               **line)
-        print "Wrote %s with %s weighting" % (outim1,weighting)        
-    else:
-        print "Skipping pure ALMA using vis1=",vis1        
 
     print "Creating TPALMA using vis2=",vis2
     if do_concat:
@@ -804,8 +787,6 @@ def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasec
 
     print "Wrote %s with %s weighting" % (outim2,weighting)
 
-    if do_alma:
-        exportfits(outim1+'.image',outim1+'.fits')
     if len(niters) == 1:
         exportfits(outim2+'.image',outim2+'.fits')
 
