@@ -37,6 +37,7 @@ set seed=0                 # random seed
 set frac=0                 # fraction random motion
 
 set noise=0                # add optional noise to cube
+set nmode=0                # noise before (0) or after (1) smooting?  [after is not good idea unless you known what you are doing]
 set clip=0                 # clipping level for cube
 
 #  parse the command line arguments (they will then override the above defaults)
@@ -86,14 +87,27 @@ echo "Creating a velocity field - method 2"
 snapgrid $run.20 $run.30 $grid_pars \
     zrange=-${vrange}:${vrange} nz=$nvel mean=f evar=m
 ccdstat $run.30
-if ($vbeam == 0) then
-  ccdmath $run.30 $run.31 "%1+rang(0,$noise)"
+if ($nmode == 0) then
+  if ($vbeam == 0) then
+    ccdmath $run.30 $run.31 "%1+rang(0,$noise)"
+  else
+    ccdmath $run.30 - "%1+rang(0,$noise)" | ccdsmooth - $run.31 $vbeam z
+  endif
 else
-  ccdmath $run.30 - "%1+rang(0,$noise)" | ccdsmooth - $run.31 $vbeam z
+  if ($vbeam == 0) then
+    ccdmath $run.30 $run.31 "%1"
+  else
+    ccdsmooth $run.30 $run.31 $vbeam z
+  endif
 endif
 ccdsmooth $run.31 $run.32.a $beam                                  # twice beam smearing
 ccdsmooth $run.31 $run.32.b $beam2
-ccdmath $run.32.a,$run.32.b $run.32 "(1-$mass2)*%1+$mass2*%2"
+if ($nmode == 0) then
+  ccdmath $run.32.a,$run.32.b $run.32 "(1-$mass2)*%1+$mass2*%2"
+else
+  ccdmath $run.32.a,$run.32.b $run.32 "(1-$mass2)*%1+$mass2*%2+rang(0,$noise)"
+endif
+
 ccdstat $run.32
 ccdmom $run.32 $run.33d axis=3 mom=0 clip=$clip
 ccdmom $run.32 $run.33v axis=3 mom=1 clip=$clip rngmsk=true
