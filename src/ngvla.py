@@ -416,7 +416,7 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=None,
     # for tclean (only used if niter>=0)
     imsize    = NG.imsize2(imsize)
     cell      = ['%garcsec' % pixel]
-    outms     = '%s/%s.%s.ms' % (project,project,cfg)
+    outms     = '%s/%s.%s.ms' % (project,project,cfg[cfg.rfind('/')+1:])
     outim     = '%s/dirtymap' % (project)
     do_fits   = True       # always output fits when you clean
 
