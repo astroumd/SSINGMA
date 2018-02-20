@@ -1,0 +1,3 @@
+- mkgalcube
+  - ccdfits and/or ccdsky need to write better FITS headers [peter via NEMO]
+
