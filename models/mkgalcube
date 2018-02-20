@@ -17,7 +17,7 @@ set pa=90                  # PA of disk on sky (E through N)
 set inc=60                 # INC of disk
 set beam=0.1               # FWHM of (smaller) beam
 set beam2=0.2              # FWHM of (bigger) beam2
-set vbeam=0                # FWHM of spectral smoothing beam 
+set vbeam=0                # FWHM of spectral smoothing beam
 set mass2=0.0              # fraction of beam2 (between 0 and 1)
 set range=8                # gridding from -range:range 
 set vrange=300             # velocity gridding -vrange:vrange
@@ -71,22 +71,6 @@ mkdisk out=- nbody=$nbody seed=$seed z0=$z0,$z1 vloss=$vloss \
     snaprotate - $run.20 "$inc,$pa" yz
 
 
-snapgrid $run.20 $run.21 $grid_pars moment=0 evar=m
-snapgrid $run.20 $run.22 $grid_pars moment=1 evar=m
-snapgrid $run.20 $run.23 $grid_pars moment=2 evar=m
-ccdsmooth $run.21 $run.21c $beam
-ccdsmooth $run.22 $run.22c $beam
-ccdsmooth $run.23 $run.23c $beam
-ccdmath $run.21c,$run.22c,$run.23c $run.20d %1
-ccdmath $run.21c,$run.22c,$run.23c $run.20v "%2/%1"
-ccdmath $run.21c,$run.22c,$run.23c $run.20s "sqrt(%3/%1-%2*%2/(%1*%1))"
-#  cutoff
-ccdmath $run.20d,$run.21 $run.21d "ifgt(%2,0,%1,0)"
-ccdmath $run.20v,$run.21 $run.21v "ifgt(%2,0,%1,0)"
-ccdmath $run.20s,$run.21 $run.21s "ifgt(%2,0,%1,0)"
-
-
-
 echo "Creating the beam"
 mkplummer - 1 | snapgrid - $run.p1 $grid_pars
 ccdsmooth $run.p1 $run.p1a $beam
@@ -116,7 +100,6 @@ ccdmom $run.32 $run.36v axis=3 mom=31 peak=1 clip=$clip  # peak
 
 
 # export for barolo or so, in decent units (could also use ccdsky)
-# for ALMA at (12h,-30d)
-ccdfits $run.32 $run.fits radecvel=t scale=1/60.0/8,1/60.0/8,1000.0 vsys=1000 crpix=$nsize/2+1,$nsize/2+1,$nvel/2+1 crval=180,-30,0
+ccdfits $run.32 $run.fits radecvel=t scale=1/60.0/8,1/60.0/8,1000.0 vsys=1000 crpix=$nsize/2+1,$nsize/2+1,$nvel/2+1 crval=180,40,0
 
 
