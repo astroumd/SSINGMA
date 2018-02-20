@@ -24,7 +24,7 @@ after which you can run a default model and view it, for example in ds9
 
 other examples:
 
-      ./mkcalcube run=model2 beam=0.5 noise=0.0001 nmode=1
+      ./mkcalcube run=model3 beam=0.5 noise=0.0001 nmode=1
 
 which does beam smearing , and adds noise after (nmode=1) the beamsmearing. This gives you uncorrelated noise
 in the final cube. If you added 10 times this noise becore the beamsmearing,
