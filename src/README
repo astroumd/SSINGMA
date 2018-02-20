@@ -28,7 +28,13 @@ Quick example how to install it
 
      wget https://teuben.github.io/nemo/install_nemo
      chmod +x install_nemo
-     ./install_nemo nemo=$HOME/opt/nemo
-     source $HOME/opt/nemo/nemo_start.sh
+     ./install_nemo nemo=$HOME/nemo
+     source $HOME/nemo/nemo_start.sh
 
 (or .csh if you shell is a csh flavor instead)
+
+and run a default model and view it in for example ds9
+
+
+     ./mkgalcube
+     ds9 model1.fits
