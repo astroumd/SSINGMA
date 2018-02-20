@@ -4,7 +4,12 @@
 #
 #  
 #  needs NEMO
-
+#
+#  See also:
+#    https://www.astro.rug.nl/~gipsy/tsk/galmod.dc1
+#    http://gigjozsa.github.io/tirific/modelling_strategy.html
+#
+#
 #  parameters, can be changed by the user via the commandline
 set run=model1             # identification, and basename for all files
 set nbody=1000000          # number of bodies per model
@@ -100,6 +105,6 @@ ccdmom $run.32 $run.36v axis=3 mom=31 peak=1 clip=$clip  # peak
 
 
 # export for barolo or so, in decent units (could also use ccdsky)
-ccdfits $run.32 $run.fits radecvel=t scale=1/60.0/8,1/60.0/8,1000.0 vsys=1000 crpix=$nsize/2+1,$nsize/2+1,$nvel/2+1 crval=180,40,0
+ccdfits $run.32 $run.fits radecvel=t scale=1/60.0/8,1/60.0/8,1.0 vsys=1000 crpix=$nsize/2+1,$nsize/2+1,$nvel/2+1 crval=180,40,0
 
 
