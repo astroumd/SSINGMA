@@ -336,6 +336,9 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
     if ptg != None:
         setpointings = False
         ptgfile      = ptg
+    if phasecenter == None:
+        phasecenter = ng_phasecenter(skymodel)
+    print "Using phasecenter %s" % phasecenter
     # obsmode     = "int"
     antennalist = "%s.cfg" % cfg     # can this be a list?
 
@@ -347,6 +350,7 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
     overwrite   = True
     graphics    = "file"       # "both" would do "screen" as well
     user_pwv    = 0.0
+    incell      = "%garcsec" % pixel
 
     # we allow accumulation now ..
     # ...make sure old directory is gone
@@ -355,6 +359,7 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
     if ptg == None:
         simobserve(project, skymodel,
                indirection=phasecenter,
+               incell=incell,
                integration=integration,
                totaltime=totaltime,
                antennalist=antennalist,
@@ -362,8 +367,9 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
                user_pwv = 0.0, thermalnoise= "")
     else:
         simobserve(project, skymodel,
-               indirection=phasecenter,                   
                setpointings=False, ptgfile=ptgfile,
+               indirection=phasecenter,                   
+               incell=incell,
                integration=integration,
                totaltime=totaltime,
                antennalist=antennalist,
@@ -430,13 +436,16 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=None,
     overwrite   = True
     graphics    = "file"       # "both" would do "screen" as well
     user_pwv    = 0.0
-
+    incell      = "%garcsec" % pixel
+    
     # we allow accumulation now ..
     # ...make sure old directory is gone
     # ...os.system("rm -rf %s" % project)
 
     if ptg == None:
         simobserve(project, skymodel,
+               indirection=phasecenter,
+               incell=incell,
                integration=integration,
                totaltime=totaltime,
                antennalist=antennalist,
@@ -445,6 +454,8 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=None,
     else:
         simobserve(project, skymodel,
                setpointings=False, ptgfile=ptgfile,
+               indirection=phasecenter,                   
+               incell=incell,
                integration=integration,
                totaltime=totaltime,
                antennalist=antennalist,
@@ -795,6 +806,18 @@ def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasec
         shutil.rmtree(outms)
     
     #-end of ng_clean()
+
+def ng_phasecenter(im):
+    """
+    return the map reference center as a phasecenter
+    """
+    NG.assertf(im)
+    #
+    h0=imhead(im,mode='list')
+    ra  = h0['crval1'] * 180.0 / math.pi
+    dec = h0['crval2'] * 180.0 / math.pi
+    phasecenter = 'J2000 %.6fdeg %.6fdeg' % (ra,dec)
+    return  phasecenter
     
 def ng_summary(tp, ms=None, source=None, line=False):
     """
@@ -870,6 +893,7 @@ def ng_summary(tp, ms=None, source=None, line=False):
     print 'SHAPE:   ',h0['shape']
     print 'CRVAL:   ',phasecenter
     print 'CRVALd:  ',phasecenterd
+    print 'PIXEL:   ',dx*apr
     print 'RESTFREQ:',restfreq[0]/1e9
     print "FREQ:    ",freq_values[0]/1e9,freq_values[-1]/1e9
     print "VEL:     ",vmin[0],vmax[0],dv
@@ -956,7 +980,39 @@ def ng_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     immoments(imcube, 0, chans=chans3, includepix=[rms*2.0,9999], mask=mask, outfile=mom0)
     immoments(imcube, 1, chans=chans3, includepix=[rms*5.5,9999], mask=mask, outfile=mom1)
 
+def ng_flux(image, box=None, plot='plot5.png'):
+    """ Plotting min,max,rms as function of channel
     
+        box     xmin,ymin,xmax,ymax       defaults to whole area
+
+        A useful way to check the the mean RMS at the first
+        or last 10 channels is:
+
+        imstat(image,axes=[0,1])['rms'][:10].mean()
+        imstat(image,axes=[0,1])['rms'][-10:].mean()
+    
+    """
+    plt.figure()
+    _tmp = imstat(image,axes=[0,1],box=box)
+    fmin = _tmp['min']
+    fmax = _tmp['max']
+    frms = _tmp['rms']
+    chan = np.arange(len(fmin))
+    f = 0.5 * (fmax - fmin) / frms
+    plt.plot(chan,fmin,c='r',label='min')
+    plt.plot(chan,fmax,c='g',label='max')
+    plt.plot(chan,frms,c='b',label='rms')
+    # plt.plot(chan,f,   c='black', label='<peak>/rms')
+    zero = 0.0 * frms
+    plt.plot(chan,zero,c='black')
+    plt.ylabel('Flux')
+    plt.xlabel('Channel')
+    plt.title('%s  Min/Max/RMS' % (image))
+    plt.legend()
+    plt.savefig(plot)
+    plt.show()
+    print "Sum: %g Jy (* unknown km/s)" % (fmax.sum())
+
 
 def ng_combine(project, TPdata, INTdata, **kwargs):
     """
