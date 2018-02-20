@@ -100,25 +100,29 @@ else
     ccdsmooth $run.30 $run.31 $vbeam z
   endif
 endif
-ccdsmooth $run.31 $run.32.a $beam                                  # twice beam smearing
-ccdsmooth $run.31 $run.32.b $beam2
-if ($nmode == 0) then
-  ccdmath $run.32.a,$run.32.b $run.32 "(1-$mass2)*%1+$mass2*%2"
+if ($beam == 0) then
+  ccdmath $run.31 $run.32 %1
 else
-  ccdmath $run.32.a,$run.32.b $run.32 "(1-$mass2)*%1+$mass2*%2+rang(0,$noise)"
-endif
+  ccdsmooth $run.31 $run.32.a $beam                                  # twice beam smearing
+  ccdsmooth $run.31 $run.32.b $beam2
+  if ($nmode == 0) then
+    ccdmath $run.32.a,$run.32.b $run.32 "(1-$mass2)*%1+$mass2*%2"
+  else
+    ccdmath $run.32.a,$run.32.b $run.32 "(1-$mass2)*%1+$mass2*%2+rang(0,$noise)"
+  endif
 
-ccdstat $run.32
-ccdmom $run.32 $run.33d axis=3 mom=0 clip=$clip
-ccdmom $run.32 $run.33v axis=3 mom=1 clip=$clip rngmsk=true
-ccdmom $run.32 $run.33s axis=3 mom=2 clip=$clip
+  ccdstat $run.32
+  ccdmom $run.32 $run.33d axis=3 mom=0 clip=$clip
+  ccdmom $run.32 $run.33v axis=3 mom=1 clip=$clip rngmsk=true
+  ccdmom $run.32 $run.33s axis=3 mom=2 clip=$clip
 
-ccdmom $run.32 $run.34v axis=3 mom=3  peak=0 clip=$clip  # peak
-ccdmom $run.32 $run.35v axis=3 mom=31 peak=0 clip=$clip
-ccdmom $run.32 $run.36v axis=3 mom=31 peak=1 clip=$clip  # peak
+  ccdmom $run.32 $run.34v axis=3 mom=3  peak=0 clip=$clip  # peak
+  ccdmom $run.32 $run.35v axis=3 mom=31 peak=0 clip=$clip
+  ccdmom $run.32 $run.36v axis=3 mom=31 peak=1 clip=$clip  # peak
+endif  
 
 
 # export for barolo or so, in decent units (could also use ccdsky)
-ccdfits $run.32 $run.fits radecvel=t scale=1/60.0/8,1/60.0/8,1.0 vsys=1000 crpix=$nsize/2+1,$nsize/2+1,$nvel/2+1 crval=180,40,0
+ccdfits $run.32 $run.fits radecvel=t scale=1/60.0/8,1/60.0/8,1000.0 vsys=1000 crpix=$nsize/2+1,$nsize/2+1,$nvel/2+1 crval=180,40,0
 
 
