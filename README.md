@@ -31,3 +31,18 @@ these at a much more significant level.
 * http://library.nrao.edu/ngvla.shtml  MEMO's
   * http://library.nrao.edu/public/memos/ngvla/NGVLA_14.pdf
   * http://library.nrao.edu/public/memos/ngvla/NGVLA_17.pdf
+
+## Examples
+
+* https://casaguides.nrao.edu/index.php/M100_Band3_Combine_4.3  
+* CASA feather: https://casa.nrao.edu/casadocs/latest/image-combination/feather
+* Kauffman's *Adding Zero-Spacing* workflow: https://sites.google.com/site/jenskauffmann/research-notes/adding-zero-spa
+
+
+## Papers
+
+* Papers of interest:
+  * [Ekers and Rots]()
+  * [Jorsater and van Moorsel 1995](http://adsabs.harvard.edu/abs/1995AJ....110.2037J)
+  * [Kurono, Morita, Kamazaki 2009](http://adsabs.harvard.edu/abs/2009PASJ...61..873K)
+  * [Koda et al. 2011](http://adsabs.harvard.edu/abs/2011ApJS..193...19K)
