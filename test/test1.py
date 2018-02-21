@@ -7,7 +7,7 @@ model        = '../models/skymodel.fits'           # this as phasecenter with de
 phasecenter  = 'J2000 180.000000deg 40.000000deg'
 ptg          = 'test1.ptg'
 
-imsize       = 1024
+imsize       = 4096
 pixel        = 0.01
 
 imsize_s     = 512
