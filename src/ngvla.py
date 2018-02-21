@@ -481,7 +481,7 @@ def ng_tp_otf(project, skymodel, dish, label, freq=None, template=None):
              overwrite=True)
 
     # @todo modify the template.replace to make sure it's only the last '.image' that is replaced just in case
-    immath(imagename=[out_pbcor, '%s/%s'%(project, template.replace('.image', '.pb'))],
+    immath(imagename=[out_pbcor, '%s'%template.replace('.image', '.pb')],
            expr='IM0*IM1',
            outfile=out_image)
 
