@@ -795,6 +795,50 @@ def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasec
     
     #-end of ng_clean()
 
+def ng_feather(project, highres=None, lowres=None, label=""):
+    """
+    Feather combination of a highres and lowres image
+
+    project    typical  "sky3/clean2", somewhere where tclean has run
+    highres    override default, needs full name w/ its project
+    lowrest    override default, needs full name w/ its project
+    
+    If the standard workflow is used, project contains the correctly named
+    dirtymap.image and otf.image from ng_clean1() and ng_tp_otf() resp.
+    @todo figure out if a manual mode will work
+
+    Typical use:
+    
+    ng_vla('sky3','skymodel.fits',4096,0.01,cfg='../SWcore',ptg='vla.ptg',phasecenter=pcvla)
+    ng_clean1('sky3/clean3','sky3/sky3.SWcore.ms',  512,0.25,phasecenter=pcvla,niter=[0,500,1000,2000,3000,4000,5000])
+    ng_tp_otf('sky3/clean3','skymodel.fits',45.0,label="45")
+    ng_feather('sky3/clean3',label="45")
+
+    """
+
+    if highres == None:
+        highres = "%s/dirtymap.image" % project                # @todo  what if you want dirtymap_5.image
+    if lowres  == None:
+        lowres  = "%s/otf%s.image"    % (project,label)        # noise flat OTF image
+    pb = highres[:highres.rfind('.')] + ".pb"
+    NG.assertf(highres)
+    NG.assertf(lowres)
+    NG.assertf(pb)
+
+    feather1 = "%s/feather%s.image"         % (project,label)
+    feather2 = "%s/feather%s.image.pbcor"   % (project,label)
+
+    feather(feather1,highres,lowres)                           # it will happily overwrite
+    os.system('rm -rf %s' % feather2)                          # immath does not overwrite
+    immath([feather1,pb],'evalexpr',feather2,'IM0/IM1')
+
+    ng_stats(highres)
+    ng_stats(lowres)
+    ng_stats(feather1)
+    ng_stats(feather2)
+
+    #-end of ng_feather()
+
 def ng_phasecenter(im):
     """
     return the map reference center as a phasecenter
