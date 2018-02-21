@@ -295,9 +295,9 @@ def ng_getamp(ms, record=0):
     return amp
 
     #-end of ng_getamp()
+
     
-    
-def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5, cfg=0, niter=-1, ptg = None):
+def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cycle=5, cfg=0, niter=-1, ptg = None):
     """
     helper function to create an MS from a skymodel for a given ALMA configuration
     See CASA/data/alma/simmos/ for the allowed (cycle,cfg) pairs
@@ -310,10 +310,6 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
 
     if niter>=0 is chosen, tclean(imagename='dirtyimage') is used, overwriting any previous dirtyimage
     """
-
-    # since we call it incrementally, make sure directory exists
-    os.system('mkdir -p %s' % project)
-    
     
     data_dir = casa['dirs']['data']                  # data_dir + '/alma/simmos' is the default location for simobserve
     if cfg==0:
@@ -323,81 +319,12 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cycle=5,
 
     print "CFG: ",cfg
 
-
-    # for tclean (only used if niter>=0)
-    imsize    = NG.imsize2(imsize)
-    cell      = ['%garcsec' % pixel]
-    outms     = '%s/%s.%s.ms' % (project,project,cfg)
-    outim     = '%s/dirtymap' % (project)
-    do_fits   = True       # always output fits when you clean
-
-
-    if ptg != None:
-        setpointings = False
-        ptgfile      = ptg
-    if phasecenter == None:
-        phasecenter = ng_phasecenter(skymodel)
-    print "Using phasecenter %s" % phasecenter
-    # obsmode     = "int"
-    antennalist = "%s.cfg" % cfg     # can this be a list?
-
-    totaltime   = "14400s"     # 4 hours  (should be multiple of 2400 ?)
-    integration = "60s"        # prevent too many samples for MS
-
-    thermalnoise= ""
-    verbose     = True
-    overwrite   = True
-    graphics    = "file"       # "both" would do "screen" as well
-    user_pwv    = 0.0
-    incell      = "%garcsec" % pixel
-
-    # we allow accumulation now ..
-    # ...make sure old directory is gone
-    # ...os.system("rm -rf %s" % project)
-
-    if ptg == None:
-        simobserve(project, skymodel,
-               indirection=phasecenter,
-               incell=incell,
-               integration=integration,
-               totaltime=totaltime,
-               antennalist=antennalist,
-               verbose=verbose, overwrite=overwrite,
-               user_pwv = 0.0, thermalnoise= "")
-    else:
-        simobserve(project, skymodel,
-               setpointings=False, ptgfile=ptgfile,
-               indirection=phasecenter,                   
-               incell=incell,
-               integration=integration,
-               totaltime=totaltime,
-               antennalist=antennalist,
-               verbose=verbose, overwrite=overwrite,                   
-               user_pwv = 0.0, thermalnoise= "")
-
-    if niter >= 0:
-        cmd1 = 'rm -rf %s.*' % outim
-        os.system(cmd1)
-        tclean(vis=outms,
-               imagename=outim,
-               niter=niter,
-               gridder='mosaic',
-               imsize=imsize,
-               cell=cell,
-               restoringbeam  = restoringbeam,
-               stokes='I',
-               pbcor=True,
-               phasecenter=phasecenter,
-               weighting='natural',
-               specmode='cube')
-        ng_stats(outim + '.image')
-        if do_fits:
-            exportfits(outim+'.image',outim+'.fits')
-
+    ng_vla(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
+    
     #-end of ng_alma()
 
     
-def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=None, niter=-1, ptg = None):
+def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, niter=-1, ptg = None):
     """
     helper function to create an MS from a skymodel for a given ngVLA configuration
     Example ngVLA  configurations:
@@ -406,12 +333,6 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=None,
     SW214.cfg
     SWVLB.cfg
     """
-
-    # since we call it incrementally, make sure directory exists
-    os.system('mkdir -p %s' % project)
-    
-    print "CFG: ",cfg
-
 
     # for tclean (only used if niter>=0)
     imsize    = NG.imsize2(imsize)
@@ -436,6 +357,7 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=None,
     graphics    = "file"       # "both" would do "screen" as well
     user_pwv    = 0.0
     incell      = "%garcsec" % pixel
+    mapsize     = ["%garcsec" % (pixel*imsize[0])  ,"%garcsec"  % (pixel*imsize[1]) ]
     
     # we allow accumulation now ..
     # ...make sure old directory is gone
@@ -445,6 +367,7 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=None,
         simobserve(project, skymodel,
                indirection=phasecenter,
                incell=incell,
+               mapsize=mapsize,
                integration=integration,
                totaltime=totaltime,
                antennalist=antennalist,
@@ -455,6 +378,7 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=None,
                setpointings=False, ptgfile=ptgfile,
                indirection=phasecenter,                   
                incell=incell,
+               mapsize=mapsize,
                integration=integration,
                totaltime=totaltime,
                antennalist=antennalist,
