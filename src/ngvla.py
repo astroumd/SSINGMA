@@ -34,7 +34,7 @@ restoringbeam = None                     # given the edge channel issue, a commo
 
 def ng_version():
     """ ng helper functions """
-    print "ngvla: version 19-feb-2018"
+    print "ngvla: version 21-feb-2018"
     print "casa:",casa['version']         # there is also:   cu.version_string()
     print "data:",casa['dirs']['data']    
 
@@ -354,6 +354,7 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None
     thermalnoise= ""
     verbose     = True
     overwrite   = True
+    small_ms    = False
     graphics    = "file"       # "both" would do "screen" as well
     user_pwv    = 0.0
     incell      = "%garcsec" % pixel
@@ -384,6 +385,12 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None
                antennalist=antennalist,
                verbose=verbose, overwrite=overwrite,                   
                user_pwv = 0.0, thermalnoise= "")
+
+    if small_ms:
+        # this is probably a bad idea if you want to add noise. Keep the MODEL_DATA
+        outms1 = outms + "_tmp"
+        os.system("mv %s %s" % (outms,outms1))
+        mstransform(outms1,outms,datacolumn='DATA',correlation='XX')    # does not work, pol code unknown
 
     if niter >= 0:
         cmd1 = 'rm -rf %s.*' % outim
