@@ -421,9 +421,74 @@ def ng_tpdish(name, size):
     t2v_arrays[name]['dish']   = size
     t2v_arrays[name]['fwhm100']= old_fwhm / r
     print "NG_DISH: ",old_size, old_fwhm, ' -> ', size, old_fwhm/r
+
+def ng_tp_otf(project, skymodel, dish, label, freq=None, template=None):
+    """
+    helper function to create on the fly total power map
     
- 
-def ng_tp(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):
+    dish:       dish diameter in meters
+    freq:       frequency in GHz
+    template:   dirty image --> must come from tclean so there is both *.image and *.pb
+    
+    @todo make use of the template for regrid
+    @todo come up with a good way to handle the directoy structure for the project input 
+    
+    E.g. for 45 m single dish configuration:
+
+    ng_tp_otf('test10/clean1', 'skymodel.im', dish=45)
+    """
+    # clean up old project
+    # os.system('rm -rf %s ; mkdir -p %s' % (project,project))
+
+    # projectpath/filename for temporary otf 
+    out_tmp   = '%s/temp_otf.image'%project
+    # projectpath/filename for otf.image.pbcor
+    out_pbcor = '%s/otf%s.image.pbcor'%(project, label)
+    # projectpath/filename for otf.image (primary beam applied)
+    out_image = '%s/otf%s.image'%(project, label)
+
+    # check if a freq was specificed in the input
+    if freq == None:
+        # if none, then pull out frequency from skymodel header
+        # @todo come up with a way to check if we are actually grabbing the frequency from the header. it's not always crval3
+        h0 = imhead(skymodel,mode='list')
+        freq = h0['crval4'] # hertz
+    else:
+        freq = freq * 1.0e9
+
+    # calculate beam size in arcsecs
+    # @todo check if alma uses 1.22*lam/D or just 1.0*lam/D
+    beam = cms / (freq * dish) * apr
+
+    # convolve skymodel with beam. assumes circular beam
+    imsmooth(imagename=skymodel,
+             kernel='gauss',
+             major='%sarcsec'%beam,
+             minor='%sarcsec'%beam,
+             pa='0deg',
+             outfile=out_tmp,
+             overwrite=True)
+
+    # regrid
+    if template == None:
+        # inherit template from dirty map if template has not be specified in the input
+        # @todo need a way to grab the last dirtymap (e.g. dirtymap7.image) or grab a specified dirty map (e.g. dirtymap7 is bad so we want dirtymap6)
+        template = '%s/dirtymap.image'%project
+
+    imregrid(imagename=out_tmp,
+             template=template,
+             output=out_pbcor,
+             overwrite=True)
+
+    # @todo modify the template.replace to make sure it's only the last '.image' that is replaced just in case
+    immath(imagename=[out_pbcor, '%s/%s'%(project, template.replace('.image', '.pb'))],
+           expr='IM0*IM1',
+           outfile=out_image)
+
+    # remove the temporary otf image that was created
+    os.system('rm -fr %s'%out_tmp)
+
+def ng_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):
            
     """
       Simple frontend to call tp2vis() and an optional tclean()
