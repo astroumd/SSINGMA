@@ -2,4 +2,4 @@
 0.2     updated CFG and material from the new http://ngvla.nrao.edu/  -
         template memo in paper/
 	small example simulation with SWcore.cfg
-0.3     ngvla.py in place
+0.3     ngvla.py in place; this is what we did in the Feb 19-22 week at UW
