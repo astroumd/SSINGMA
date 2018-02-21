@@ -1,9 +1,12 @@
 #! /bin/csh -f
 #
-#  mkgalcube:   make a galaxy cube in FITS format
+#  mkgalcube:   make a galaxy cube in FITS format, using NEMO
 #
-#  
-#  needs NEMO
+#
+#  By default this gives a 16 arcmin field, a galaxy of size 12 arcmin, and 5" pixels
+#  and covering about 600 km/s spectrally, although the galaxy covers 200 at most.
+#
+#  Any additional scaling will need to happen in the simobserve() interfaces.
 #
 #  See also:
 #    https://www.astro.rug.nl/~gipsy/tsk/galmod.dc1
@@ -26,9 +29,9 @@ set beam2=0.2              # FWHM of (bigger) beam2
 set vbeam=0                # FWHM of spectral smoothing beam
 set mass2=0.0              # fraction of beam2 (between 0 and 1)
 set range=8                # gridding from -range:range 
-set vrange=300             # velocity gridding -vrange:vrange
-set nsize=128              # number of pixels in gridding (px=py=2*range/nx)
-set nvel=128               # number of pixels in velocity
+set vrange=150             # velocity gridding -vrange:vrange
+set nsize=192              # number of pixels in gridding (px=py=2*range/nx)
+set nvel=60                # number of pixels in velocity 
 
 set z0=0.0                 # scaleheight of disk (density)
 set z1=0.0                 # scaleheight of disk (velocity) [new model]
@@ -41,8 +44,11 @@ set noise=0                # add optional noise to cube
 set nmode=0                # noise before (0) or after (1) smooting?  [after is not good idea unless you known what you are doing]
 set clip=0                 # clipping level for cube
 
-set restfreq=115.2712      # CO restfreq in GHz   (HI: 1.420405751786)
 set restfreq=1.420405751786 # HI restfreq in GHz 
+set restfreq=115.2712       # CO restfreq in GHz   (HI: 1.420405751786)
+set dec=40                  # DEC of source (RA is forced at 12h)
+
+set clean=1                 # cleanup non-fits files?
 
 #  parse the command line arguments (they will then override the above defaults)
 
@@ -93,10 +99,10 @@ mkdisk out=- nbody=$nbody seed=$seed z0=$z0,$z1 vloss=$vloss \
 
 
 echo "Creating the beam"
-mkplummer - 1 | snapgrid - $run.p1 $grid_pars
-ccdsmooth $run.p1 $run.p1a $beam
-ccdsmooth $run.p1 $run.p1b $beam2
-ccdmath $run.p1a,$run.p1b $run.beam "(1-$mass2)*%1+$mass2*%2"
+mkplummer - 1 | snapgrid - $run.1p $grid_pars
+ccdsmooth $run.1p $run.1pa $beam
+ccdsmooth $run.1p $run.1pb $beam2
+ccdmath $run.1pa,$run.1pb $run.1beam "(1-$mass2)*%1+$mass2*%2"
 
 echo "Creating a velocity field - method 2"
 snapgrid $run.20 $run.30 $grid_pars \
@@ -136,8 +142,16 @@ ccdmom $run.32 $run.34v axis=3 mom=3  peak=0 clip=$clip  # peak
 ccdmom $run.32 $run.35v axis=3 mom=31 peak=0 clip=$clip
 ccdmom $run.32 $run.36v axis=3 mom=31 peak=1 clip=$clip  # peak
 
+# PV slice based on $nsize/2
+ccdslice $run.31 - y $nsize/2-1:$nsize/2 | ccdmom - $run.1pv 3 -1
 
-# export for barolo or so, in decent units (could also use ccdsky)
-ccdfits $run.32 $run.fits radecvel=t scale=1/60.0/8,1/60.0/8,1000.0 vsys=1000 crpix=$nsize/2+1,$nsize/2+1,$nvel/2+1 crval=180,40,0 restfreq="$restfreq*1e9"
+# export for BAROLO and such, in decent units (could also use ccdsky)
+#                        
+ccdfits $run.32 $run.fits radecvel=t scale=1/60.0,1/60.0,1000.0 crpix=$nsize/2+0.5,$nsize/2+0.5,$nvel/2+0.5 \
+        crval=180,$dec,0 restfreq="$restfreq*1e9"
 
 
+
+if ($clean) then
+   rm $run.[0-9]*
+endif
