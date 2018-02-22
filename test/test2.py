@@ -52,8 +52,9 @@ ng_tp_otf('test2/clean1','test2/test2.SWcore.skymodel', 18.0, label="18")
 ng_feather('test2/clean1',label="45")
 ng_feather('test2/clean1',label="18")
 
-ng_feather('test2/clean1', 'test2/clean1/dirtymap_2.image', label='45')
-ng_feather('test2/clean1', 'test2/clean1/dirtymap_2.image', label='18')
+# combine TP + INT using feather on cleaned images
+ng_feather('test2/clean1', label='45', niteridx=1)
+ng_feather('test2/clean1', label='18', niteridx=1)
 
 #
 print "Done!"
