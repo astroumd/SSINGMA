@@ -4,7 +4,11 @@ Better use the github issue tracker for this where appropriate:
 
 - mkgalcube
   - ccdfits and/or ccdsky need to write better FITS headers [peter via NEMO]
-
+  - use a more functional form that has a (r0,v0) scaling, which can be fitted
+    in the simulated observations. This way we have a way to measure how one
+    particular science result depends on the array selection parameters.
+  - flux scaling (to note here is that in NEMO the sum(I.dx.dy.dz) is conserved
+    when you smooth, which is not how CASA does it.
 
 - overal flexiblity missing?
 
@@ -13,3 +17,8 @@ Better use the github issue tracker for this where appropriate:
   - single point mosaic
   - no polarization
   - no telescope/sky noise added yet, might need FREQ for this as well (see XLS tables)
+
+
+- plots:
+  - 2D UV density plot, similar to weight density in tp2vis
+  
