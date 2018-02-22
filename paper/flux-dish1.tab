@@ -1,0 +1,18 @@
+# skymodel using test1  and 0.01 pixel
+# flux recovery where 113.1 is the correct flux from skymodel.fits
+# D = dish size (m)
+# F = flux (kJy)
+#
+# D  F
+#
+8   44.2
+10 53.7
+12  62.7
+14   70.7
+16 77.6
+18  83.5
+24  95.5
+30 102.2
+36  105.8
+42  107.6
+45  108.1
