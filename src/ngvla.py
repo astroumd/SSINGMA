@@ -865,7 +865,10 @@ def ng_phasecenter(im):
     #-end of ng_phasecenter()
 
 def ng_ptg(ptg, ptgfile=None):
-    """ write a ptg list to a ptg file
+    """ write a ptg list (or single) to a ptg file
+        Example for format of the ptg's:
+            J2000 180.000000deg 40.000000deg
+            J2000 12:00:00.000  40.00.00.000
     """
     if ptgfile == None: return
     fp = open(ptgfile,"w")
@@ -876,7 +879,7 @@ def ng_ptg(ptg, ptgfile=None):
         fp.write("%s" % ptg)
     fp.close()
 
-    #-end of ng_phasecenter()    
+    #-end of ng_ptg()    
     
 def ng_summary(tp, ms=None, source=None, line=False):
     """
