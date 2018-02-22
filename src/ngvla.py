@@ -34,7 +34,7 @@ restoringbeam = None                     # given the edge channel issue, a commo
 
 def ng_version():
     """ ng helper functions """
-    print "ngvla: version 21-feb-2018"
+    print "ngvla: version 22-feb-2018"
     print "casa:",casa['version']         # there is also:   cu.version_string()
     print "data:",casa['dirs']['data']    
 
@@ -45,6 +45,20 @@ def ng_log(message, verbose=True):
         print ""
         print "========= NGVLA: %s " % message
         print ""
+
+def ng_argv(sysargv):
+    """
+    safe argument parser from CASA, removing the CASA dependant ones, including the script name
+    
+    Typical usage:
+
+         import sys
+
+         for arg in ng_argv(sys.argv):
+         exec(arg)
+
+    """
+    return sysargv[3:]
 
 
 def ng_tmp(prefix, tmpdir='.'):
