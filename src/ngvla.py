@@ -429,6 +429,8 @@ def ng_tpdish(name, size):
     t2v_arrays[name]['fwhm100']= old_fwhm / r
     print "NG_DISH: ",old_size, old_fwhm, ' -> ', size, old_fwhm/r
 
+    #-end of ng_tpdish()    
+
 def ng_tp_otf(project, skymodel, dish, label, freq=None, template=None):
     """
     helper function to create on the fly total power map
@@ -494,6 +496,8 @@ def ng_tp_otf(project, skymodel, dish, label, freq=None, template=None):
 
     # remove the temporary otf image that was created
     os.system('rm -fr %s'%out_tmp)
+
+    #-end of ng_tp_otf()    
 
 def ng_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, phasecenter=None, rms=None, maxuv=10.0, nvgrp=4, fix=1, deconv=True, **line):
            
@@ -627,7 +631,7 @@ def ng_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, pha
     
     exportfits(dirtymap + ".image", dirtymap + ".fits")
 
-    #-end of ng_tp()
+    #-end of ng_tp_vis()
 
 
 def ng_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", phasecenter="",  **line):
@@ -857,6 +861,22 @@ def ng_phasecenter(im):
     dec = h0['crval2'] * 180.0 / math.pi
     phasecenter = 'J2000 %.6fdeg %.6fdeg' % (ra,dec)
     return  phasecenter
+
+    #-end of ng_phasecenter()
+
+def ng_ptg(ptg, ptgfile=None):
+    """ write a ptg list to a ptg file
+    """
+    if ptgfile == None: return
+    fp = open(ptgfile,"w")
+    if type(ptg) == type([]):
+        for p in ptg:
+            fp.write("%s" % p)
+    else:
+        fp.write("%s" % ptg)
+    fp.close()
+
+    #-end of ng_phasecenter()    
     
 def ng_summary(tp, ms=None, source=None, line=False):
     """
