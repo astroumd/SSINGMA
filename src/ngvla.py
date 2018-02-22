@@ -489,8 +489,8 @@ def ng_tp_otf(project, skymodel, dish, label, freq=None, template=None):
              output=out_pbcor,
              overwrite=True)
 
-    # @todo modify the template.replace to make sure it's only the last '.image' that is replaced just in case
-    immath(imagename=[out_pbcor, '%s'%template.replace('.image', '.pb')],
+    # immath to create primary beam applied. assumes the template is output from tclean so that you have file.image and file.pb
+    immath(imagename=[out_pbcor, '%s.pb'%template[:-6]],
            expr='IM0*IM1',
            outfile=out_image)
 
