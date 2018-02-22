@@ -21,6 +21,8 @@ pixel_m      = 0.1
 imsize_s     = 512
 pixel_s      = 0.1
 
+niter = [0,1000,2000]
+
 # decide if you want the whole cube (chans=-1) or just a specific channel
 chans        = '24' # must be a string. for a range of channels --> '24~30'
 
@@ -55,6 +57,11 @@ ng_feather('test2/clean1', label='45', niteridx=1)
 ng_feather('test2/clean1', label='18', niteridx=1)
 ng_feather('test2/clean1', label='45', niteridx=2)
 ng_feather('test2/clean1', label='18', niteridx=2)
+
+# smooth out skymodel image with feather beam so we can compare feather to original all in jy/beam
+ng_smooth('test2/clean1', 'test2/test2.SWcore.skymodel', label='18', niteridx=2)
+ng_smooth('test2/clean1', 'test2/test2.SWcore.skymodel', label='45', niteridx=2)
+
 
 #
 print "Done!"

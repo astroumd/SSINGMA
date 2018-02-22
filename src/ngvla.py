@@ -859,6 +859,56 @@ def ng_feather(project, highres=None, lowres=None, label="", niteridx=0):
 
     #-end of ng_feather()
 
+def ng_smooth(project, skymodel, label, niteridx=0):
+    """
+    helper function to smooth skymodel using beam of feathered image
+    essentially converts the orginal skymodel from jy/pixel to jy/beam for easy comparison
+    """
+    if niteridx == 0:
+        niter_label = ""
+    else:
+        niter_label = "_%s"%(niteridx + 1)
+
+    # feather image path/filename
+    feather = '%s/feather%s%s.image.pbcor' % (project, label, niter_label)
+    # projectpath/filename for a temporary image that will get deleted
+    out_tmp = '%s/skymodel_tmp.image' % project
+    # projectpath/filename for final regrid jy/beam image
+    out_smoo = '%s/skymodel.smooth%s%s.image' % (project, label, niter_label)
+    # projectpath/filename for subtracted image
+    out_resid= '%s/feather%s%s.residual' % (project, label, niter_label)
+
+    # grab beam size and position angle from feather image
+    h0 = imhead(feather, mode='list')
+    bmaj = h0['beammajor']['value']
+    bmin = h0['beamminor']['value']
+    pa   = h0['beampa']['value']
+
+    # convolve skymodel with feather beam
+    imsmooth(imagename=skymodel,
+             kernel='gauss',
+             major='%sarcsec' % bmaj,
+             minor='%sarcsec' % bmin,
+             pa='%sdeg' % pa,
+             outfile=out_tmp,
+             overwrite=True)
+
+    # need to regrid skymodel using feather image as template
+    imregrid(imagename=out_tmp,
+             template=feather,
+             output=out_smoo,
+             overwrite=True)
+
+    # subtract feather from smoothed skymodel to get a residual map
+    immath(imagename=[out_smoo, feather], 
+           expr='IM0-IM1',
+           outfile=out_resid)
+
+    # remove the temporary image that was created
+    os.system('rm -fr %s'%out_tmp)
+
+    #-end of ng_smooth()
+
 def ng_phasecenter(im):
     """
     return the map reference center as a phasecenter
