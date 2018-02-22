@@ -6,10 +6,9 @@
 #  it is assumed you have done    execfile('ngvla.py')
 #
 
-
-model        = '../models/model10.fits'           # this as phasecenter with dec=-30 for ALMA sims
+model        = '../models/model0.fits'           # this as phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg 40.000000deg'
-ptg          = 'test1.ptg'
+ptg          = 'test2.ptg'
 
 # pick the piece of the model to image, and at what pixel size
 imsize_m     = 192
@@ -19,12 +18,25 @@ pixel_m      = 0.1
 imsize_s     = 512
 pixel_s      = 0.1
 
+# decide if you want the whole cube (chans=-1) or just a specific channel
+chans        = '24' # must be a string. for a range of channels --> '24~30'
+
+if chans != -1:
+    model_out = '%sa.image'%model[:model.rfind('.fits')]
+    # delete any previously made models otherwise imsubimage won't run
+    os.system('rm -fr %s'%model_out)
+    # imsubimage to pull out the selected channel(s)
+    imsubimage(model, model_out, chans=chans)
+    # rewrite the model variable with our new model
+    model = model_out
+
 
 if True:
     # need a better way?  an ng_()
     fp = open(ptg,"w")
     fp.write("%s" % phasecenter)
     fp.close()
+
 
 # create a MS based on a model and antenna configuration
 ng_vla('test2',model,imsize_m,pixel_m,cfg='../SWcore',ptg=ptg, phasecenter=phasecenter)
@@ -40,8 +52,12 @@ ng_tp_otf('test2/clean1','test2/test2.SWcore.skymodel', 18.0, label="18")
 ng_feather('test2/clean1',label="45")
 ng_feather('test2/clean1',label="18")
 
+# combine TP + INT using feather on cleaned images
+ng_feather('test2/clean1', label='45', niteridx=1)
+ng_feather('test2/clean1', label='18', niteridx=1)
+
 #
-print "Done!"exi
+print "Done!"
 
 # --------------------------------------------------------------------------------------------------------------
 # regression

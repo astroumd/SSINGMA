@@ -806,13 +806,13 @@ def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasec
     
     #-end of ng_clean()
 
-def ng_feather(project, highres=None, lowres=None, label=""):
+def ng_feather(project, highres=None, lowres=None, label="", niteridx=0):
     """
     Feather combination of a highres and lowres image
 
     project    typical  "sky3/clean2", somewhere where tclean has run
     highres    override default, needs full name w/ its project
-    lowrest    override default, needs full name w/ its project
+    lowres     override default, needs full name w/ its project
     
     If the standard workflow is used, project contains the correctly named
     dirtymap.image and otf.image from ng_clean1() and ng_tp_otf() resp.
@@ -826,9 +826,18 @@ def ng_feather(project, highres=None, lowres=None, label=""):
     ng_feather('sky3/clean3',label="45")
 
     """
+    # if the niteridx is 0, then the niter label will be an empty string
+    if niteridx == 0:
+        niter_label = ""
+    else:
+        # otherwise the niter label reflect the tclean naming convention
+        # e.g. tclean used niter = [0, 1000, 2000] and returned dirtymap, dirtymap_2, and dirtymap_3
+        # to get the second iteration of tclean (niter=1000), niteridx = 1
+        niter_label = "_%s"%(niteridx + 1)
+
 
     if highres == None:
-        highres = "%s/dirtymap.image" % project                # @todo  what if you want dirtymap_5.image
+        highres = "%s/dirtymap%s.image" % (project,niter_label) 
     if lowres  == None:
         lowres  = "%s/otf%s.image"    % (project,label)        # noise flat OTF image
     pb = highres[:highres.rfind('.')] + ".pb"
@@ -836,8 +845,8 @@ def ng_feather(project, highres=None, lowres=None, label=""):
     NG.assertf(lowres)
     NG.assertf(pb)
 
-    feather1 = "%s/feather%s.image"         % (project,label)
-    feather2 = "%s/feather%s.image.pbcor"   % (project,label)
+    feather1 = "%s/feather%s%s.image"       % (project,label,niter_label)
+    feather2 = "%s/feather%s%s.image.pbcor" % (project,label,niter_label)
 
     feather(feather1,highres,lowres)                           # it will happily overwrite
     os.system('rm -rf %s' % feather2)                          # immath does not overwrite
