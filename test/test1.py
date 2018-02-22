@@ -12,6 +12,7 @@ phasecenter  = 'J2000 180.000000deg 40.000000deg'  # so modify this for ngVLA
 ptg          = 'test1.ptg'                         # and use a single pointing mosaic for the ptg
 
 # pick the piece of the model to image, and at what pixel size
+# natively this model is 4096 pixels at 0.05"
 imsize_m     = 4096
 pixel_m      = 0.01
 
@@ -19,7 +20,13 @@ pixel_m      = 0.01
 imsize_s     = 512
 pixel_s      = 0.25
 
+# pick a few niter values for tclean to check flux convergence 
 niter        = [0,1000,2000]
+
+
+
+# report
+ng_version()
 
 # create a single pointing mosaic
 ng_ptg(phasecenter,ptg)
@@ -30,13 +37,14 @@ ng_vla('test1',model,imsize_m,pixel_m,cfg='../SWcore',ptg=ptg, phasecenter=phase
 # clean this interferometric map a bit
 ng_clean1('test1/clean1','test1/test1.SWcore.ms',  imsize_s, pixel_s, phasecenter=phasecenter,niter=niter)
 
-# create two OTF maps 
+# create two OTF TP maps 
 ng_tp_otf('test1/clean1','test1/test1.SWcore.skymodel', 45.0, label="45")
 ng_tp_otf('test1/clean1','test1/test1.SWcore.skymodel', 18.0, label="18")
 
-# combine TP + INT using feather
-ng_feather('test1/clean1',label="45")
-ng_feather('test1/clean1',label="18")
+# combine TP + INT using feather, for all niter's
+for idx in range(len(niter)):
+    ng_feather('test1/clean1',label="45",niteridx=idx)
+    ng_feather('test1/clean1',label="18",niteridx=idx)
 
 #
 print "Done!"

@@ -1,6 +1,15 @@
 
-Better use the github issue tracker for this.
+Better use the github issue tracker for this where appropriate:
+
 
 - mkgalcube
   - ccdfits and/or ccdsky need to write better FITS headers [peter via NEMO]
 
+
+- overal flexiblity missing?
+
+  - cannot simulate at different FREQ, most at 115GHz now (there is now a freq= keyword)
+    incenter= and inwidth= need to correctly maintain doppler range in galaxy cubes
+  - single point mosaic
+  - no polarization
+  - no telescope/sky noise added yet, might need FREQ for this as well (see XLS tables)
