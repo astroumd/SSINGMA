@@ -4,7 +4,8 @@
 #
 #
 #  By default this gives a 16 arcmin field, a galaxy of size 12 arcmin, and 5" pixels
-#  and covering about 600 km/s spectrally, although the galaxy covers 200 at most.
+#  and covering about 300 km/s spectrally, although the galaxy covers 200 at most. This
+#  leaves a few line free channels at both ends of the spectrum.
 #
 #  Any additional scaling will need to happen in the simobserve() interfaces.
 #
