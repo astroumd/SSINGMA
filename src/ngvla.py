@@ -1086,10 +1086,10 @@ def ng_summary(tp, ms=None, source=None, line=False):
 def ng_math(outfile, infile1, oper, infile2):
     """  just simpler to read
     """
-    if oper='+':  expr = 'IM0+IM1'
-    if oper='-':  expr = 'IM0-IM1'
-    if oper='*':  expr = 'IM0*IM1'
-    if oper='/':  expr = 'IM0/IM1'
+    if oper=='+':  expr = 'IM0+IM1'
+    if oper=='-':  expr = 'IM0-IM1'
+    if oper=='*':  expr = 'IM0*IM1'
+    if oper=='/':  expr = 'IM0/IM1'
     immath([infile1,infile2],'evalexpr',outfile,expr)
 
     #-end of ng_math()
