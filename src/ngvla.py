@@ -506,6 +506,7 @@ def ng_tp_otf(project, skymodel, dish, label, freq=None, template=None):
     immath(imagename=[out_pbcor, '%s.pb'%template[:-6]],
            expr='IM0*IM1',
            outfile=out_image)
+    # ng_math(out_image, '%s.pb'%template[:-6]], '*', out_pbcor);
 
     # remove the temporary otf image that was created
     os.system('rm -fr %s'%out_tmp)
@@ -866,6 +867,7 @@ def ng_feather(project, highres=None, lowres=None, label="", niteridx=0):
     feather(feather1,highres,lowres)                           # it will happily overwrite
     os.system('rm -rf %s' % feather2)                          # immath does not overwrite
     immath([feather1,pb],'evalexpr',feather2,'IM0/IM1')
+    # ng_math(feather2, feather1, "/", pb)
 
     ng_stats(highres)
     ng_stats(lowres)
@@ -920,6 +922,7 @@ def ng_smooth(project, skymodel, label, niteridx=0):
     immath(imagename=[out_smoo, feather], 
            expr='IM0-IM1',
            outfile=out_resid)
+    # ng_math(out_resid, out_smoo, '-', feather)
 
     # remove the temporary image that was created
     os.system('rm -fr %s'%out_tmp)
