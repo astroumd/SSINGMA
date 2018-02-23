@@ -362,13 +362,12 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None
     # obsmode     = "int"
     antennalist = "%s.cfg" % cfg     # can this be a list?
 
-    totaltime   = "28800s"     # 4 hours  (should be multiple of 2400 ?)
-    integration = "30s"        # prevent too many samples for MS
-
+    totaltime   = "28800s"     # 4 hours  (should be multiple of 2400 ?)       @todo fix this to smaller
+    integration = "30s"        # prevent too many samples for MS               @todo fix this
     thermalnoise= ""
     verbose     = True
     overwrite   = True
-    small_ms    = False
+    small_ms    = False        # @todo doesn't seem to work
     graphics    = "file"       # "both" would do "screen" as well
     user_pwv    = 0.0
     incell      = "%garcsec" % pixel
@@ -648,7 +647,7 @@ def ng_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, pha
     #-end of ng_tp_vis()
 
 
-def ng_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", phasecenter="",  **line):
+def ng_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", startmodel="", phasecenter="",  **line):
     """
     Simple interface to do a tclean() on one MS
     
@@ -725,8 +724,10 @@ def ng_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", 
                weighting       = weighting,
                specmode        = 'cube',
                restart         = restart,
+               startmodel      = startmodel ,
                **line)
-        restart = False
+        restart    = False
+        startmodel = ""
     
     print "Wrote %s with %s weighting" % (outim1,weighting)
 
@@ -877,6 +878,8 @@ def ng_smooth(project, skymodel, label, niteridx=0):
     """
     helper function to smooth skymodel using beam of feathered image
     essentially converts the orginal skymodel from jy/pixel to jy/beam for easy comparison
+
+    @todo  feather is looked for, but it also be a tp2vis? or other method?
     """
     if niteridx == 0:
         niter_label = ""
@@ -1079,6 +1082,17 @@ def ng_summary(tp, ms=None, source=None, line=False):
         # print 'FREQ:',chan_freq[0][0]/1e9,chan_freq[-1][0]/1e9,ref_freq[0][0]/1e9
 
     #-end of ng_summary()
+
+def ng_math(outfile, infile1, oper, infile2):
+    """  just simpler to read
+    """
+    if oper='+':  expr = 'IM0+IM1'
+    if oper='-':  expr = 'IM0-IM1'
+    if oper='*':  expr = 'IM0*IM1'
+    if oper='/':  expr = 'IM0/IM1'
+    immath([infile1,infile2],'evalexpr',outfile,expr)
+
+    #-end of ng_math()
 
 def ng_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     """
