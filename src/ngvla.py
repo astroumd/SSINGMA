@@ -46,20 +46,6 @@ def ng_log(message, verbose=True):
         print "========= NGVLA: %s " % message
         print ""
 
-def ng_argv(sysargv):
-    """
-    safe argument parser from CASA, removing the CASA dependant ones, including the script name
-    
-    Typical usage:
-
-         import sys
-
-         for arg in ng_argv(sys.argv):
-         exec(arg)
-
-    """
-    return sysargv[3:]
-
 
 def ng_tmp(prefix, tmpdir='.'):
     """ Create a temporary file in a tmpdir
@@ -425,7 +411,7 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None
         if do_fits:
             exportfits(outim+'.image',outim+'.fits')
 
-    return out_ms
+    return outms
     #-end of ng_vla()
 
 def ng_tpdish(name, size):
@@ -446,16 +432,16 @@ def ng_tpdish(name, size):
 
     #-end of ng_tpdish()    
 
-def ng_tp_otf(project, skymodel, dish, label, freq=None, template=None):
+def ng_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
     """
     helper function to create on the fly total power map
     
     dish:       dish diameter in meters
-    freq:       frequency in GHz
+    freq:       frequency in GHz, if you want to override the image header value 
     template:   dirty image --> must come from tclean so there is both *.image and *.pb
     
     @todo make use of the template for regrid
-    @todo come up with a good way to handle the directoy structure for the project input 
+    @todo come up with a good way to handle the directory structure for the project input 
     
     E.g. for 45 m single dish configuration:
 
@@ -878,7 +864,7 @@ def ng_feather(project, highres=None, lowres=None, label="", niteridx=0):
 
     #-end of ng_feather()
 
-def ng_smooth(project, skymodel, label, niteridx=0):
+def ng_smooth(project, skymodel, label="", niteridx=0):
     """
     helper function to smooth skymodel using beam of feathered image
     essentially converts the orginal skymodel from jy/pixel to jy/beam for easy comparison
@@ -1213,9 +1199,41 @@ def ng_combine(project, TPdata, INTdata, **kwargs):
     if type(INTdata) == type([]):
         _INT_data = INTdata
     else:
-        _INT_data = [INTdata]        
+        _INT_data = [INTdata]
+
+
+def ng_argv(sysargv):
+    """
+    safe argument parser from CASA, removing the CASA dependant ones, including the script name
+    
+    Typical usage:
+
+         import sys
+
+         for arg in ng_argv(sys.argv):
+         exec(arg)
+
+    """
+    return sysargv[3:]
+
+        
         
     
+def ng_initkeys(keys, argv=[]):
+    NG.keys = {}
+    for k in keys.keys():
+        NG.keys[k] = keys[k]
+    for kv in argv[3:]:
+        i = kv.find('=')
+        if i > 0:
+            # isn't there a better pythonic way to do this?
+            cmd='NG.keys["%s"]=%s' % (kv[:i], kv[i+1:])
+            exec(cmd)
+        
+
+def ng_getkey(key):
+    return NG.keys[key]
+
 
 class NG(object):
     """ Static class to hide some local helper functions
