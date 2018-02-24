@@ -6,7 +6,7 @@
 #
 
 test         = 'test1-alma'
-model        = '../models/skymodel.fits'           # this has phasecenter with dec=-30 for ALMA sims
+model        = '../models/skymodel.fits'            # this has phasecenter with dec=-30 for ALMA sims
 phasecenter  = 'J2000 180.000000deg -30.000000deg'  # so modify this for ngVLA
 
 # pick the piece of the model to image, and at what pixel size
@@ -14,12 +14,12 @@ phasecenter  = 'J2000 180.000000deg -30.000000deg'  # so modify this for ngVLA
 imsize_m     = 4096
 pixel_m      = 0.01
 
-# pick the sky imaging parameters (for tclean)
+# pick the sky imaging parameters (for tclean) 
 imsize_s     = 256
 pixel_s      = 0.16
 
 # pick a few niter values for tclean to check flux convergence 
-niter        = [0,500]
+niter        = [0,500,1000,2000]
 
 cfg          = [0,1,2,3,4,5]
 
@@ -59,11 +59,14 @@ ng_clean1(test+'/clean2',mslist,  imsize_s, pixel_s, phasecenter=phasecenter,nit
 ng_log("OTF")
 # create an OTF TP map
 ng_tp_otf(test+'/clean1', startmodel, 12.0)
+ng_tp_otf(test+'/clean2', startmodel, 12.0)
 
 ng_log("FEATHER")
 # combine TP + INT using feather, for all niter's
 for idx in range(len(niter)):
     ng_feather(test+'/clean1',niteridx=idx)
     ng_smooth(test+'/clean1', startmodel, niteridx=idx)
+    ng_feather(test+'/clean2',niteridx=idx)
+    ng_smooth(test+'/clean2', startmodel, niteridx=idx)
 #
 ng_log("DONE!")
