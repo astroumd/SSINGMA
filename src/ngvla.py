@@ -34,7 +34,7 @@ restoringbeam = None                     # given the edge channel issue, a commo
 
 def ng_version():
     """ ng helper functions """
-    print "ngvla: version 22-feb-2018"
+    print "ngvla: version 24-feb-2018"
     print "casa:",casa['version']         # there is also:   cu.version_string()
     print "data:",casa['dirs']['data']    
 
@@ -333,7 +333,7 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=Non
 
     print "CFG: ",cfg
 
-    ms ng_vla(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
+    ms = ng_vla(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
     return ms
 
     #-end of ng_alma()
