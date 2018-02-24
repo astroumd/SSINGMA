@@ -7,7 +7,7 @@ import os
 
 try:
     ngvla_root = os.environ['HOME'] + '/.casa/SSINGMA'      # SET THIS TO YOUR LOCATION OF SSINGMA or use a symlink
-    py_files   = ['src/ngvla.py']                           # Pick the ones you want
+    py_files   = ['src/ngvla']                              # Pick the ones you want
     #
     work_dir = os.getcwd()
     sys.path.append(ngvla_root)
