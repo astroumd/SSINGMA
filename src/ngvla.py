@@ -333,8 +333,9 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=Non
 
     print "CFG: ",cfg
 
-    ng_vla(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
-    
+    ms ng_vla(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
+    return ms
+
     #-end of ng_alma()
 
     
@@ -424,6 +425,7 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None
         if do_fits:
             exportfits(outim+'.image',outim+'.fits')
 
+    return out_ms
     #-end of ng_vla()
 
 def ng_tpdish(name, size):
