@@ -1,4 +1,9 @@
 #
+#    a 6m dish has a PB (at 115Ghz) of around 100"
+#
+#    ~70sec cpu
+#    simobserve will plot a 100" PB
+#    beam is 10 x 8.9"
 
 test         = 'test1-SSA'
 model        = '../models/skymodel.fits'           # this has phasecenter with dec=-30 for ALMA sims
@@ -7,11 +12,11 @@ phasecenter  = 'J2000 180.000000deg 40.000000deg'  # so modify this for ngVLA
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
 imsize_m     = 4096
-pixel_m      = 0.01
+pixel_m      = 0.025
 
 # pick the sky imaging parameters (for tclean)
 imsize_s     = 512
-pixel_s      = 0.25
+pixel_s      = 0.2
 
 # pick a few niter values for tclean to check flux convergence 
 niter        = 0
@@ -31,7 +36,8 @@ cfg = cfg1
 msfile   = '.' + cfg[cfg.rfind('/')+1:]  + '.ms'
 skymodel = '.' + cfg[cfg.rfind('/')+1:]  + '.skymodel'
 
-# report
+# start and report
+ng_start("test1-SSA")
 ng_version()
 
 # create a single pointing mosaic
@@ -44,5 +50,5 @@ ng_vla(test,model,imsize_m,pixel_m,cfg=cfg,ptg=ptg, phasecenter=phasecenter)
 ng_clean1(test+'/clean1',test+'/'+test+msfile,  imsize_s, pixel_s, phasecenter=phasecenter,niter=niter)
 
 #
-print "Done!"
+ng_end()
 
