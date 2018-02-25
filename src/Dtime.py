@@ -204,7 +204,8 @@ class Dtime(object):
 
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
+if False:
     logging.basicConfig(level = logging.INFO)
     dt = Dtime("testingDtime")
     dt.tag('one')
