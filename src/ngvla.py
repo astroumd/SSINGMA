@@ -101,7 +101,7 @@ def ng_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=Fa
         """
         return '\'' + name + '\''
     
-
+    ng_tag("stats")
     NG.assertf(image)
 
     if NG.iscasa(image + '/ANTENNA'):                      # assume it's a MS
@@ -180,6 +180,7 @@ def ng_beam(im, normalized=False, plot=None):
 
     @todo   have an option to just print beam, no volume info
     """
+    ng_tag("beam")    
     if not NG.iscasa(im):
         print "NG_BEAM: missing %s " % im
         return
@@ -252,6 +253,7 @@ def ng_getuv(ms, kwave=True):
 
     Usage:   (u,v) = ng_getuv('msfile',True)
     """
+    ng_tag("getuv")
     tb.open(ms)
     uvw  = tb.getcol('UVW')
     tb.close()
@@ -283,6 +285,7 @@ def ng_getamp(ms, record=0):
     
     Usage:   amp = ng_getamp('msfile')
     """
+    ng_tag("getamp")
     tb.open(ms)
     uvw  = tb.getcol('UVW')[0:2,:]               # uvw[2,nvis]
     idx = np.where( np.abs(uvw).min(axis=0) == 0 )[0]
@@ -310,7 +313,9 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=Non
 
     if niter>=0 is chosen, tclean(imagename='dirtyimage') is used, overwriting any previous dirtyimage
     """
-    
+
+    ng_tag("alma")    
+    #                                                  os.getenv("CASAPATH").split()[0]+"/data/alma/simmos/"    
     data_dir = casa['dirs']['data']                  # data_dir + '/alma/simmos' is the default location for simobserve
     if cfg==0:
         cfg = 'aca.cycle%d' % (cycle)                # cfg=0 means ACA (7m)
@@ -319,12 +324,11 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=Non
 
     print "CFG: ",cfg
 
-    ms = ng_vla(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
+    ms = ng_generic(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
     return ms
 
     #-end of ng_alma()
 
-    
 def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, niter=-1, ptg = None):
     """
     helper function to create an MS from a skymodel for a given ngVLA configuration
@@ -333,6 +337,14 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None
     SWcore.cfg
     SW214.cfg
     SWVLB.cfg
+    """
+    ng_tag("vla")
+    ms = ng_generic(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
+    return ms
+    
+def ng_generic(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None, cfg=None, niter=-1, ptg = None):
+    """
+
     """
 
     # for tclean (only used if niter>=0)
@@ -349,8 +361,8 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None
     # obsmode     = "int"
     antennalist = "%s.cfg" % cfg     # can this be a list?
 
-    totaltime   = "28800s"     # 4 hours  (should be multiple of 2400 ?)       @todo fix this to smaller
-    integration = "30s"        # prevent too many samples for MS               @todo fix this
+    totaltime   = "14400s"     # 4 hours  (should be multiple of 2400 ?)       @todo fix this to smaller
+    integration = "60s"        # prevent too many samples for MS               @todo fix this
     thermalnoise= ""
     verbose     = True
     overwrite   = True
@@ -423,6 +435,8 @@ def ng_tpdish(name, size):
     ng_tpdish('ALMATP',100.0)
     ng_tpdish('VIRTUAL',100.0)
     """
+    ng_tag("tpdish")
+    
     old_size = t2v_arrays[name]['dish']
     old_fwhm = t2v_arrays[name]['fwhm100']
     r = size/old_size
@@ -447,6 +461,9 @@ def ng_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
 
     ng_tp_otf('test10/clean1', 'skymodel.im', dish=45)
     """
+
+    ng_tag("tpdish")
+    
     # clean up old project
     # os.system('rm -rf %s ; mkdir -p %s' % (project,project))
 
@@ -537,6 +554,8 @@ def ng_tp_vis(project, imagename, ptg=None, imsize=512, pixel=1.0, niter=-1, pha
 
       line           Dictionary of tclean() parameters
     """
+    ng_tag("tp_vis")
+    
     # assert input files
     NG.assertf(imagename)
     NG.assertf(ptg)    
@@ -650,6 +669,8 @@ def ng_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", 
     phasecenter  ""     (e.g. 'J2000 03h28m58.6s +31d17m05.8s')
     **line
     """
+    ng_tag("clean1")
+    
     os.system('rm -rf %s; mkdir -p %s' % (project,project))
     #
     outim1 = '%s/dirtymap' % project
@@ -739,6 +760,8 @@ def ng_clean(project, tp, ms, imsize=512, pixel=0.5, weighting="natural", phasec
     do_concat   - work around a bug in tclean ?  Default is true until this bug is fixed
     do_alma     - also make a map from just the ms (without tp)
     """
+    ng_tag("clean")
+    
     os.system('rm -rf %s; mkdir -p %s' % (project,project))
     #
     outim2 = '%s/tpalma' % project
@@ -830,6 +853,7 @@ def ng_feather(project, highres=None, lowres=None, label="", niteridx=0):
     ng_feather('sky3/clean3',label="45")
 
     """
+    ng_tag("feather")
     # if the niteridx is 0, then the niter label will be an empty string
     if niteridx == 0:
         niter_label = ""
@@ -871,6 +895,7 @@ def ng_smooth(project, skymodel, label="", niteridx=0):
 
     @todo  feather is looked for, but it also be a tp2vis? or other method?
     """
+    ng_tag("smooth")    
     if niteridx == 0:
         niter_label = ""
     else:
@@ -921,6 +946,8 @@ def ng_phasecenter(im):
     """
     return the map reference center as a phasecenter
     """
+    ng_tag("phasecenter")
+    
     NG.assertf(im)
     #
     h0=imhead(im,mode='list')
@@ -937,6 +964,8 @@ def ng_ptg(ptg, ptgfile=None):
             J2000 180.000000deg 40.000000deg
             J2000 12:00:00.000  40.00.00.000
     """
+    ng_tag("ptg")
+    
     if ptgfile == None: return
     fp = open(ptgfile,"w")
     if type(ptg) == type([]):
@@ -957,7 +986,8 @@ def ng_summary(tp, ms=None, source=None, line=False):
     ms      - MS, or a list of MS
     source  - if given, it needs to match this source name in the MS
     """
-
+    ng_tag("summary")
+    
     def vrange(f,rf):
         nf = len(f)
         if rf > 0:
@@ -1077,6 +1107,8 @@ def ng_summary(tp, ms=None, source=None, line=False):
 def ng_math(outfile, infile1, oper, infile2):
     """  just simpler to read
     """
+    ng_tag("math")
+    
     if oper=='+':  expr = 'IM0+IM1'
     if oper=='-':  expr = 'IM0-IM1'
     if oper=='*':  expr = 'IM0*IM1'
@@ -1095,6 +1127,8 @@ def ng_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     pbcut:       if PB is used, this is the cutoff above which mask is used
     
     """
+    ng_tag("mom")
+    
     def lel(name):
         """ convert filename to a safe filename for LEL expressions, e.g. in mask=
         """
@@ -1132,6 +1166,8 @@ def ng_flux(image, box=None, dv = 1.0, plot='plot5.png'):
         imstat(image,axes=[0,1])['rms'][-10:].mean()
     
     """
+    ng_tag("flux")
+    
     plt.figure()
     _tmp = imstat(image,axes=[0,1],box=box)
     fmin = _tmp['min']
@@ -1185,7 +1221,8 @@ def ng_combine(project, TPdata, INTdata, **kwargs):
 
 
     """
-
+    ng_tag("combine")
+    
     print "you just wished this would work...."
 
     if False:
@@ -1216,9 +1253,6 @@ def ng_argv(sysargv):
     """
     return sysargv[3:]
 
-        
-        
-    
 def ng_initkeys(keys, argv=[]):
     NG.keys = {}
     for k in keys.keys():
@@ -1230,10 +1264,23 @@ def ng_initkeys(keys, argv=[]):
             cmd='NG.keys["%s"]=%s' % (kv[:i], kv[i+1:])
             exec(cmd)
         
-
 def ng_getkey(key):
     return NG.keys[key]
 
+
+
+def ng_start(label="ngvla"):
+    NG.dt = Dtime(label)
+
+def ng_tag(label):
+    if NG.hasdt(): 
+        NG.dt.tag(label)
+
+def ng_end():
+    if NG.hasdt(): 
+        NG.dt.tag("done")
+        NG.dt.end()
+        
 
 class NG(object):
     """ Static class to hide some local helper functions
@@ -1245,6 +1292,11 @@ class NG(object):
         assertf
     
     """
+    @staticmethod
+    def hasdt():
+        if dir(NG).count('dt') == 0: return False
+        return True
+        
     @staticmethod
     def rmcasa(filename):
         if NG.iscasa(filename):
