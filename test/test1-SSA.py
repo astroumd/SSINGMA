@@ -32,12 +32,13 @@ cfg1 = '../contrib/ngvlaSA_2b'
 cfg2 = '../contrib/ngvlaSA_2b_utm'
 # Note: diameters in configuration file will not be used - PB for NGVLA will be used
 
+# pick a cfg, and create the names simobserve() uses
 cfg = cfg1
-msfile   = '.' + cfg[cfg.rfind('/')+1:]  + '.ms'
-skymodel = '.' + cfg[cfg.rfind('/')+1:]  + '.skymodel'
+msfile   = test + '.' + cfg[cfg.rfind('/')+1:]  + '.ms'
+skymodel = test + '.' + cfg[cfg.rfind('/')+1:]  + '.skymodel'
 
 # start and report
-ng_start("test1-SSA")
+ng_begin(test)
 ng_version()
 
 # create a single pointing mosaic
@@ -47,8 +48,10 @@ ng_ptg(phasecenter,ptg)
 ng_vla(test,model,imsize_m,pixel_m,cfg=cfg,ptg=ptg, phasecenter=phasecenter)
 
 # clean this interferometric map a bit
-ng_clean1(test+'/clean1',test+'/'+test+msfile,  imsize_s, pixel_s, phasecenter=phasecenter,niter=niter)
+ng_clean1(test+'/clean1',test+'/'+msfile,  imsize_s, pixel_s, phasecenter=phasecenter,niter=niter)
 
+ng_stats(model)
+ng_stats(test+'/clean1/dirtymap.image.pbcor')
 #
 ng_end()
 
