@@ -182,6 +182,10 @@ does not have the overwrite=True option.
 
 Compute moments 0,1 (and soon 2) in some standard way, so we can compare simulations and skymodels.
 
+### ng_plot(image, box, plot)
+
+Create a simple colorimage from a casa imasge. By default it appends "png" to the current name. 
+
 ### ng_flux(image, box, dv, plot)
 
 Create a plot showing flux as function of channel. Good to compare flux comparisons
