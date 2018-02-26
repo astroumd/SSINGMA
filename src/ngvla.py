@@ -339,7 +339,7 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=Non
     ms1 = ng_generic(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
 
     if visweightscale != 1.0:
-        print "We need to set lower weights since the 7m dishes are smaller than 12m.",scale_weights
+        print "We need to set lower weights since the 7m dishes are smaller than 12m.",visweightscale
         ms2 = ms1 + '.tmp'
         os.system('mv %s %s' % (ms1,ms2))
         concat(ms2, ms1, visweightscale=visweightscale)
