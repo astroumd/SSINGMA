@@ -76,5 +76,28 @@ for idx in range(len(niter)):
     ng_smooth(test+'/clean2', startmodel, niteridx=idx)
 # the real flux
 ng_stats(model)
+
+ng_log("REGRESSION")
+
+ng_stats(model)
+ng_stats(test+'/clean1/dirtymap.image.pbcor')
+ng_stats(test+'/clean1/dirtymap_2.image.pbcor')
+ng_stats(test+'/clean1/dirtymap_3.image.pbcor')
+ng_stats(test+'/clean1/dirtymap_4.image.pbcor')
+ng_stats(test+'/clean1/feather.image.pbcor')
+ng_stats(test+'/clean1/feather_2.image.pbcor')
+ng_stats(test+'/clean1/feather_3.image.pbcor')
+ng_stats(test+'/clean1/feather_4.image.pbcor')
+ng_stats(test+'/clean2/dirtymap.image.pbcor')
+ng_stats(test+'/clean2/dirtymap_2.image.pbcor')
+ng_stats(test+'/clean2/dirtymap_3.image.pbcor')
+ng_stats(test+'/clean2/dirtymap_4.image.pbcor')
+ng_stats(test+'/clean2/feather.image.pbcor')
+ng_stats(test+'/clean2/feather_2.image.pbcor')
+ng_stats(test+'/clean2/feather_3.image.pbcor')
+ng_stats(test+'/clean2/feather_4.image.pbcor')
+
+ng_stats(test+'/clean1/skymodel.smooth.image')
+
 ng_log("DONE!")
 ng_end()
