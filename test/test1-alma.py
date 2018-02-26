@@ -37,7 +37,7 @@ ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
     
 
 # report, add Dtime
-ng_start(test)
+ng_begin(test)
 ng_log("REPORT")
 ng_version()
 
@@ -48,15 +48,6 @@ ng_ptg(phasecenter,ptg)
 ng_log("NG_ALMA")
 for c in cfg:
     ms1 = ng_alma(test,model,imsize_m,pixel_m,cycle=5,cfg=c,ptg=ptg, phasecenter=phasecenter)
-    if c==0:
-        print "Setting lower weights on the 7m ACA array ",ms1
-        ms2 = ms1 + '.tmp'
-        os.system('mv %s %s' % (ms1,ms2))
-        concat(ms2, ms1, visweightscale=(7.0/12.0)**2)
-        os.system('rm -rf %s' % ms2)
-
-# Warning:  if cfg=0 is part of your simulation, it should be using a lower weight by (7/12)**2
-#  
 
 # startmodel (a cheat)
 startmodel = ms1.replace('.ms','.skymodel')
