@@ -13,11 +13,11 @@ phasecenter  = 'J2000 180.000000deg 40.000000deg'  # so modify this for ngVLA
 # pick the piece of the model to image, and at what pixel size
 # natively this model is 4096 pixels at 0.05"
 imsize_m     = 4096
-pixel_m      = 0.01
+pixel_m      = 0.005    # 0.01 was the bench
 
 # pick the sky imaging parameters (for tclean)
 imsize_s     = 512
-pixel_s      = 0.25
+pixel_s      = 0.1     # 0.25 was the bench
 
 # pick a few niter values for tclean to check flux convergence 
 niter        = [0,1000,2000]
@@ -28,38 +28,43 @@ for arg in ng_argv(sys.argv):
     exec(arg)
 
 ptg = test + '.ptg'              # use a single pointing mosaic for the ptg
-    
+if type(niter) != type([]): niter = [niter]
 
+    
 # report
+ng_log("TEST: %s" % test)
+ng_begin(test)
 ng_version()
 
 # create a single pointing mosaic
 ng_ptg(phasecenter,ptg)
 
 # create a MS based on a model and antenna configuration
+ng_log("VLA")
 ng_vla(test,model,imsize_m,pixel_m,cfg='../SWcore',ptg=ptg, phasecenter=phasecenter)
 
 # clean this interferometric map a bit
+ng_log("CLEAN")
 ng_clean1(test+'/clean1',test+'/'+test+'.SWcore.ms',  imsize_s, pixel_s, phasecenter=phasecenter,niter=niter)
 
-# create two OTF TP maps 
+# create two OTF TP maps
+ng_log("OTF")
 ng_tp_otf(test+'/clean1',test+'/'+test+'.SWcore.skymodel', 45.0, label="45")
 ng_tp_otf(test+'/clean1',test+'/'+test+'.SWcore.skymodel', 18.0, label="18")
 
 # combine TP + INT using feather, for all niter's
+ng_log("FEATHER")
 for idx in range(len(niter)):
     ng_feather(test+'/clean1',label="45",niteridx=idx)
     ng_feather(test+'/clean1',label="18",niteridx=idx)
 
 #
-print "Done!"
-
 # --------------------------------------------------------------------------------------------------------------
 # regression
 
 regress51 = [
-    "0.0067413167369069988 0.010552344105427177 0.0 0.10000000149011612 113100.52701950389",
-    "411.08972165273946 821.42796910126435 0.070715504411804908 21357.570702738558 0.0",
+    "0.0067413167369070152 0.010552344105428218 0.0 0.10000000149011612 113100.52701950417",
+    "376.81918701712272 791.0277433970175 0.25461947454935646 20152.279939787601 0.0",
     "2.0449149476928925 22.901153529996495 -33.027679443359375 96.835914611816406 1479.648825106718",
     "6570.3070261008925 8953.8105374926636 309.4671630859375 24888.931640625 60026.507913198388",
     "42668.1077336737 44654.739711457922 13273.1376953125 67745.1171875 70071.789310851134",
@@ -80,11 +85,17 @@ ng_log("**** REGRESSION STATS ****")
 ng_stats(model,                                 r[0])
 ng_stats('test1/test1.SWcore.ms',               r[1])
 ng_stats('test1/clean1/dirtymap.image',         r[2])
-ng_stats('test1/clean1/otf45.image',            r[3])
-ng_stats('test1/clean1/otf18.image.pbcor',      r[4])
-ng_stats('test1/clean1/otf45.image',            r[5])
-ng_stats('test1/clean1/otf18.image.pbcor',      r[6])
-ng_stats('test1/clean1/feather45.image',        r[7])
-ng_stats('test1/clean1/feather45.image.pbcor',  r[8])
-ng_stats('test1/clean1/feather18.image',        r[9])
-ng_stats('test1/clean1/feather18.image.pbcor',  r[10])
+ng_stats('test1/clean1/otf18.image.pbcor')
+ng_stats('test1/clean1/otf45.image.pbcor')
+ng_stats('test1/clean1/dirtymap.image.pbcor')
+ng_stats('test1/clean1/dirtymap_2.image.pbcor')
+ng_stats('test1/clean1/dirtymap_3.image.pbcor')
+ng_stats('test1/clean1/feather18.image.pbcor')
+ng_stats('test1/clean1/feather18_2.image.pbcor')
+ng_stats('test1/clean1/feather18_3.image.pbcor')
+ng_stats('test1/clean1/feather45.image.pbcor')
+ng_stats('test1/clean1/feather45_2.image.pbcor')
+ng_stats('test1/clean1/feather45_3.image.pbcor')
+
+# done
+ng_end()
