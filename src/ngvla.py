@@ -12,8 +12,9 @@
 #
 # 
 #
-import os, shutil, math, tempfile
+import os, sys, shutil, math, tempfile
 import os.path
+import logging
 # from buildmosaic import buildmosaic
 # from utils import constutils as const
 import numpy as np
@@ -34,7 +35,7 @@ restoringbeam = None                     # given the edge channel issue, a commo
 
 def ng_version():
     """ ng helper functions """
-    print "ngvla: version 24-feb-2018"
+    print "ngvla: version 25-feb-2018"
     print "casa:",casa['version']         # there is also:   cu.version_string()
     print "data:",casa['dirs']['data']    
 
@@ -74,7 +75,7 @@ def ng_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=Fa
 
         This routine can also be used for regression testing (see test=)
 
-        image     image file name (CASA, FITS, MIRIAD)
+        image     image file name (CASA, FITS, MIRIAD) - MS also allowed
         test      expected regression string
         eps       if given, it should parse the test string into numbers, each number
                   needs to be within relative error "eps", i.e. abs(v1-v2)/abs(v) < eps
@@ -86,6 +87,8 @@ def ng_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=Fa
 
         Output should contain:   mean,rms,min,max,flux
     """
+    ng_tag("stats")
+    
     def text2array(text):
         a = text.split()
         b = np.zeros(len(a))
@@ -100,9 +103,10 @@ def ng_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=Fa
         """ convert filename to a safe filename for LEL expressions, e.g. in mask=
         """
         return '\'' + name + '\''
-    
-    ng_tag("stats")
-    NG.assertf(image)
+
+    if not NG.exists(image):
+        print "NG_STATS: %s missing" % image        
+        return
 
     if NG.iscasa(image + '/ANTENNA'):                      # assume it's a MS
         tb.open(image)
@@ -115,6 +119,7 @@ def ng_stats(image, test = None, eps=None, box=None, pb=None, pbcut=0.8, edge=Fa
         tb.close()
         del data
     else:                                    # assume it's an IM
+        ng_plot(image)
         maskarea = None
         if pbcut != None:
             # this requires a .pb file to be parallel to the .image file
@@ -180,7 +185,8 @@ def ng_beam(im, normalized=False, plot=None):
 
     @todo   have an option to just print beam, no volume info
     """
-    ng_tag("beam")    
+    ng_tag("beam")
+    
     if not NG.iscasa(im):
         print "NG_BEAM: missing %s " % im
         return
@@ -254,6 +260,7 @@ def ng_getuv(ms, kwave=True):
     Usage:   (u,v) = ng_getuv('msfile',True)
     """
     ng_tag("getuv")
+    
     tb.open(ms)
     uvw  = tb.getcol('UVW')
     tb.close()
@@ -286,6 +293,7 @@ def ng_getamp(ms, record=0):
     Usage:   amp = ng_getamp('msfile')
     """
     ng_tag("getamp")
+    
     tb.open(ms)
     uvw  = tb.getcol('UVW')[0:2,:]               # uvw[2,nvis]
     idx = np.where( np.abs(uvw).min(axis=0) == 0 )[0]
@@ -313,8 +321,12 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=Non
 
     if niter>=0 is chosen, tclean(imagename='dirtyimage') is used, overwriting any previous dirtyimage
     """
-
-    ng_tag("alma")    
+    ng_tag("alma")
+    
+    if cfg == 0:
+        visweightscale = (7.0/12.0)**2
+    else:
+        visweightscale = 1.0        
     #                                                  os.getenv("CASAPATH").split()[0]+"/data/alma/simmos/"    
     data_dir = casa['dirs']['data']                  # data_dir + '/alma/simmos' is the default location for simobserve
     if cfg==0:
@@ -324,8 +336,16 @@ def ng_alma(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=Non
 
     print "CFG: ",cfg
 
-    ms = ng_generic(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
-    return ms
+    ms1 = ng_generic(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
+
+    if visweightscale != 1.0:
+        print "We need to set lower weights since the 7m dishes are smaller than 12m.",scale_weights
+        ms2 = ms1 + '.tmp'
+        os.system('mv %s %s' % (ms1,ms2))
+        concat(ms2, ms1, visweightscale=visweightscale)
+        os.system('rm -rf %s' % ms2)
+    
+    return ms1
 
     #-end of ng_alma()
 
@@ -339,6 +359,7 @@ def ng_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=None
     SWVLB.cfg
     """
     ng_tag("vla")
+    
     ms = ng_generic(project,skymodel,imsize,pixel,phasecenter,freq,cfg,niter,ptg)
     return ms
     
@@ -358,11 +379,14 @@ def ng_generic(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=
     if ptg != None:
         setpointings = False
         ptgfile      = ptg
-    # obsmode     = "int"
     antennalist = "%s.cfg" % cfg     # can this be a list?
 
-    totaltime   = "14400s"     # 4 hours  (should be multiple of 2400 ?)       @todo fix this to smaller
-    integration = "60s"        # prevent too many samples for MS               @todo fix this
+    if True:                         # this should be ok for quick ngVLA simulations
+        totaltime =   "1200s" 
+        integration = "60s"
+    else:                            # for SSA or ALMA we may need more; figure that out later
+        totaltime =   "14400s"
+        integration = "60s"
     thermalnoise= ""
     verbose     = True
     overwrite   = True
@@ -419,7 +443,8 @@ def ng_generic(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, freq=
                phasecenter=phasecenter,
                weighting='natural',
                specmode='cube')
-        ng_stats(outim + '.image')
+        if False:
+            ng_stats(outim + '.image')
         if do_fits:
             exportfits(outim+'.image',outim+'.fits')
 
@@ -461,8 +486,7 @@ def ng_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
 
     ng_tp_otf('test10/clean1', 'skymodel.im', dish=45)
     """
-
-    ng_tag("tpdish")
+    ng_tag("tp_otf")
     
     # clean up old project
     # os.system('rm -rf %s ; mkdir -p %s' % (project,project))
@@ -854,6 +878,7 @@ def ng_feather(project, highres=None, lowres=None, label="", niteridx=0):
 
     """
     ng_tag("feather")
+    
     # if the niteridx is 0, then the niter label will be an empty string
     if niteridx == 0:
         niter_label = ""
@@ -881,10 +906,11 @@ def ng_feather(project, highres=None, lowres=None, label="", niteridx=0):
     immath([feather1,pb],'evalexpr',feather2,'IM0/IM1')
     # ng_math(feather2, feather1, "/", pb)
 
-    ng_stats(highres)
-    ng_stats(lowres)
-    ng_stats(feather1)
-    ng_stats(feather2)
+    if False:
+        ng_stats(highres)
+        ng_stats(lowres)
+        ng_stats(feather1)
+        ng_stats(feather2)
 
     #-end of ng_feather()
 
@@ -895,7 +921,8 @@ def ng_smooth(project, skymodel, label="", niteridx=0):
 
     @todo  feather is looked for, but it also be a tp2vis? or other method?
     """
-    ng_tag("smooth")    
+    ng_tag("smooth")
+    
     if niteridx == 0:
         niter_label = ""
     else:
@@ -1113,10 +1140,26 @@ def ng_math(outfile, infile1, oper, infile2):
     if oper=='-':  expr = 'IM0-IM1'
     if oper=='*':  expr = 'IM0*IM1'
     if oper=='/':  expr = 'IM0/IM1'
+    os.system("rm -rf %s" % outfile)
     immath([infile1,infile2],'evalexpr',outfile,expr)
 
     #-end of ng_math()
 
+def ng_plot(image, box=None, plot=None):
+    """  just a quick and dirty png, currently automatically called by ng_stats()
+
+    box:   not implemented yet
+    """
+    ng_tag("plot")
+    
+    if plot==None:
+        out = image+'.png'
+    else:
+        out = plot
+    imview(raster=[{'file': image, 'colorwedge' : True}], out=out)
+
+    #-end of ng_plot()
+    
 def ng_mom(imcube, chan_rms, pb=None, pbcut=0.3):
     """
     Take mom0 and mom1 of an image cube, in the style of the M100 casaguide.
@@ -1260,7 +1303,7 @@ def ng_initkeys(keys, argv=[]):
     for kv in argv[3:]:
         i = kv.find('=')
         if i > 0:
-            # isn't there a better pythonic way to do this?
+            # @todo isn't there a better pythonic way to do this?
             cmd='NG.keys["%s"]=%s' % (kv[:i], kv[i+1:])
             exec(cmd)
         
@@ -1269,14 +1312,40 @@ def ng_getkey(key):
 
 
 
-def ng_start(label="ngvla"):
-    NG.dt = Dtime(label)
+def ng_begin(label="ngvla"):
+    """
+    Every script should start with ng_begin() if you want to use the logger
+    and/or Dtime output for performance testing
+
+    See also ng_tag() and ng_end()
+    """
+    if False:
+        # @todo until the logging + print problem solved, this is disabled
+        logging.basicConfig(level = logging.INFO)
+        root_logger = logging.getLogger()
+        print 'root_logger =', root_logger
+        print 'handlers:', root_logger.handlers
+        handler = root_logger.handlers[0]
+        print 'handler stream:', handler.stream
+        import sys
+        print 'sys.stderr:', sys.stderr
+        NG.dt = Dtime(label)
 
 def ng_tag(label):
+    """
+    Dtime.tag()
+    
+    See also ng_begin()
+    """
     if NG.hasdt(): 
         NG.dt.tag(label)
 
 def ng_end():
+    """
+    Dtime.end()
+    
+    See also ng_begin()
+    """
     if NG.hasdt(): 
         NG.dt.tag("done")
         NG.dt.end()
@@ -1304,6 +1373,10 @@ class NG(object):
         else:
             print "Warning: %s is not a CASA dataset" % filename
 
+    @staticmethod
+    def exists(filename):
+        return os.path.exists(filename)
+        
     @staticmethod
     def iscasa(filename, casatype=None):
         """is a file a casa image
