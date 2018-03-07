@@ -501,9 +501,8 @@ def ng_tp_otf(project, skymodel, dish, label="", freq=None, template=None):
     # check if a freq was specificed in the input
     if freq == None:
         # if none, then pull out frequency from skymodel header
-        # @todo come up with a way to check if we are actually grabbing the frequency from the header. it's not always crval3
-        h0 = imhead(skymodel,mode='list')
-        freq = h0['crval4'] # hertz
+        f = imhead(skymodel, mode='get', hdkey='restfreq')
+        freq = f['value']
     else:
         freq = freq * 1.0e9
 
@@ -750,7 +749,7 @@ def ng_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", 
                gridder         = 'mosaic',
                imsize          = imsize,
                cell            = cell,
-               restoringbeam   = restoringbeam,           
+               restoringbeam   = 'common',           # jt: change to 'common' from restoringbeam to see if it fixing multiple channel images with feather
                stokes          = 'I',
                pbcor           = True,
                phasecenter     = phasecenter,
@@ -900,6 +899,17 @@ def ng_feather(project, highres=None, lowres=None, label="", niteridx=0):
 
     feather1 = "%s/feather%s%s.image"       % (project,label,niter_label)
     feather2 = "%s/feather%s%s.image.pbcor" % (project,label,niter_label)
+
+    # # beam header information
+    # for image in [highres, lowres]:
+    #     h = imhead(image, mode='list')
+    #     if 'perplanebeams' in h:
+    #         bmaj = h['perplanebeams']['median area beam']['major']
+    #         bmin = h['perplanebeams']['median area beam']['minor']
+    #         imhead(image, mode='put', hdkey='beammajor', hdvalue=bmaj)
+    #         imhead(image, mode='put', hdkey='beamminor', hdvalue=bmin)
+
+
 
     feather(feather1,highres,lowres)                           # it will happily overwrite
     os.system('rm -rf %s' % feather2)                          # immath does not overwrite
