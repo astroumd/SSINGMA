@@ -25,8 +25,7 @@ pixel_s      = 0.1
 niter = [0,1000,2000]
 
 # decide if you want the whole cube (chans=-1) or just a specific channel
-chans        = '24' # must be a string. for a range of channels --> '24~30'
-
+chans        = '-1' # must be a string. for a range of channels --> '24~30'
 
 
 # -- do not change parameters below this ---
@@ -35,7 +34,7 @@ for arg in ng_argv(sys.argv):
     exec(arg)
 
 # rename model variable if single channel (or range) has been chosen so we don't overwrite models 
-if chans != -1:
+if chans != '-1':
     model_out = '%sa.image'%model[:model.rfind('.fits')]
     # delete any previously made models otherwise imsubimage won't run
     os.system('rm -fr %s'%model_out)
@@ -77,9 +76,10 @@ for idx in range(len(niter)):
 
 
 # smooth out skymodel image with feather beam so we can compare feather to original all in jy/beam
-# @todo make this more like the feather loop
-ng_smooth('test2/clean1', 'test2/test2.SWcore.skymodel', label='18', niteridx=2)
-ng_smooth('test2/clean1', 'test2/test2.SWcore.skymodel', label='45', niteridx=2)
+ng_log('SMOOTH')
+for idx in range(len(niter)):
+    ng_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='18', niteridx=idx)
+    ng_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='45', niteridx=idx)
 
 
 #
