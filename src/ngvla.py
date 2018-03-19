@@ -979,6 +979,16 @@ def ng_smooth(project, skymodel, label="", niteridx=0):
 
     #-end of ng_smooth()
 
+def ng_analyze(project, image, skymodel):
+    """
+    helper function for using simanalyze after tclean has been run
+
+    @todo check out simanalyze's ability to perform clean and feathering. compare to our current routines
+    """
+    return None
+
+
+
 def ng_phasecenter(im):
     """
     return the map reference center as a phasecenter
