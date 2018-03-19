@@ -694,7 +694,7 @@ def ng_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting="natural", 
     """
     ng_tag("clean1")
     
-    os.system('rm -rf %s; mkdir -p %s' % (project,project))
+    # os.system('rm -rf %s; mkdir -p %s' % (project,project))   #jt: commented out while figuring out simanalyze
     #
     outim1 = '%s/dirtymap' % project
     #
@@ -979,13 +979,21 @@ def ng_smooth(project, skymodel, label="", niteridx=0):
 
     #-end of ng_smooth()
 
-def ng_analyze(project, image, skymodel):
+def ng_analyze(project, imagename):
     """
-    helper function for using simanalyze after tclean has been run
+    helper function for using simanalyze without it running clean
 
-    @todo check out simanalyze's ability to perform clean and feathering. compare to our current routines
+    @todo get this going with it running clean to see how it compares to our manual cleaning (ng_clean1)
     """
-    return None
+    # imsize    = NG.imsize2(imsize)
+    # cell      = '%garcsec' % pixel
+
+
+    simanalyze(project=project,
+               image=False,
+               imagename=imagename,
+               analyze=True,
+               overwrite=True)
 
 
 
