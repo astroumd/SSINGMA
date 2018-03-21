@@ -81,7 +81,10 @@ for idx in range(len(niter)):
 #     ng_smooth(test+'/clean1', test+'/'+test+'.SWcore.skymodel', label='45', niteridx=idx)
 
 ng_log('ANALYZE')
-ng_analyze(test, test+'/dirtymap.image')
+for idx in range(len(niter)):
+    ng_analyze(test, 'dirtymap', niteridx=idx)
+    ng_analyze(test, 'feather18', niteridx=idx)
+    ng_analyze(test, 'feather45', niteridx=idx)
 
 
 #
