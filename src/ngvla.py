@@ -979,14 +979,26 @@ def ng_smooth(project, skymodel, label="", niteridx=0):
 
     #-end of ng_smooth()
 
-def ng_analyze(project, imagename):
+def ng_analyze(project, imagename, niteridx=0):
     """
     helper function for using simanalyze without it running clean
 
     @todo get this going with it running clean to see how it compares to our manual cleaning (ng_clean1)
     """
-    # imsize    = NG.imsize2(imsize)
-    # cell      = '%garcsec' % pixel
+
+    ng_tag('analyze')
+
+    # if the niteridx is 0, then the niter label will be an empty string
+    if niteridx == 0:
+        niter_label = ""
+    else:
+        # otherwise the niter label reflect the tclean naming convention
+        # e.g. tclean used niter = [0, 1000, 2000] and returned dirtymap, dirtymap_2, and dirtymap_3
+        # to get the second iteration of tclean (niter=1000), niteridx = 1
+        niter_label = "_%s"%(niteridx + 1)
+
+
+    imagename = project + '/%s%s.image' %(imagename,niter_label)
 
 
     simanalyze(project=project,
@@ -995,7 +1007,7 @@ def ng_analyze(project, imagename):
                analyze=True,
                overwrite=True)
 
-
+    #-end of ng_analyze()
 
 def ng_phasecenter(im):
     """
