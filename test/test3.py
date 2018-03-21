@@ -23,7 +23,7 @@ pixel_s      = 0.1
 niter = [0, 1000, 2000]
 
 # decide if you want the whole cube (chans=-1) or just a specific channel
-chans        = '24' # must be a string. for a range of channels --> '24~30'
+chans        = '-1' # must be a string. for a range of channels --> '24~30'
 
 
 # -- do not change parameters below this ---
@@ -59,26 +59,31 @@ ng_vla(test,model,imsize_m,pixel_m,cfg=cfg_path+cfg_file,ptg=ptg, phasecenter=ph
 
 # clean this interferometric map a bit
 ng_log('CLEAN')
-ng_clean1(test+'/clean1',test+'/'+test+'.'+cfg_file+'.ms',  imsize_s, pixel_s, phasecenter=phasecenter, niter=niter)
+ng_clean1(test,test+'/'+test+'.'+cfg_file+'.ms',  imsize_s, pixel_s, phasecenter=phasecenter, niter=niter)
 
 # create two OTF maps 
 ng_log('OTF')
-ng_tp_otf(test+'/clean1',test+'/'+test+'.'+cfg_file+'.skymodel', 45.0, label='45')
-ng_tp_otf(test+'/clean1',test+'/'+test+'.'+cfg_file+'.skymodel', 18.0, label='18')
+ng_tp_otf(test,test+'/'+test+'.'+cfg_file+'.skymodel', 45.0, label='45')
+ng_tp_otf(test,test+'/'+test+'.'+cfg_file+'.skymodel', 18.0, label='18')
 
 # combine TP + INT using feather, for all niters
 ng_log('FEATHER')
 for idx in range(len(niter)):
-	ng_feather(test+'/clean1',label='45',niteridx=idx)
-	ng_feather(test+'/clean1',label='18',niteridx=idx)
+	ng_feather(test,label='45',niteridx=idx)
+	ng_feather(test,label='18',niteridx=idx)
 
 
 # smooth out skymodel image with feather beam so we can compare feather to original all in jy/beam
-ng_log('SMOOTH')
-for idx in range(len(niter)):
-    ng_smooth(test+'/clean1', test+'/'+test+'.'+cfg_file+'.skymodel', label='18', niteridx=idx)
-    ng_smooth(test+'/clean1', test+'/'+test+'.'+cfg_file+'.skymodel', label='45', niteridx=idx)
+# ng_log('SMOOTH')
+# for idx in range(len(niter)):
+#     ng_smooth(test+'/clean1', test+'/'+test+'.'+cfg_file+'.skymodel', label='18', niteridx=idx)
+#     ng_smooth(test+'/clean1', test+'/'+test+'.'+cfg_file+'.skymodel', label='45', niteridx=idx)
 
+ng_log('ANALYZE')
+for idx in range(len(niter)):
+    ng_analyze(test, 'dirtymap', niteridx=idx)
+    ng_analyze(test, 'feather18', niteridx=idx)
+    ng_analyze(test, 'feather45', niteridx=idx)
 
 #
 ng_end()
