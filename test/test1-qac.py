@@ -41,7 +41,7 @@ qac_ptg(phasecenter,ptg)
 
 # create a MS based on a model and antenna configuration
 qac_log("VLA")
-qac_vla(test,model,imsize_m,pixel_m,cfg='../SWcore',ptg=ptg, phasecenter=phasecenter)
+qac_vla(test,model,imsize_m,pixel_m,cfg=1,ptg=ptg, phasecenter=phasecenter)
 
 # clean this interferometric map a bit
 qac_log("CLEAN")
