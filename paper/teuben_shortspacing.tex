@@ -1,0 +1,484 @@
+% This is the ngVLA_chapt_template.tex file, based on the aspauthor.tex LaTeX file
+% Version 1.1: 16 January 2018
+% v1.1 changes:  Inclusion of abstract as this will be searchable by ADS.  
+
+% For more instruction on putting together you chapter (e.g., Figures, Tables, Lists, etc.)
+% Please see the aspauthor.tex for more information on 
+% Copyright 2014, Astronomical Society of the Pacific Conference Series
+% Revision:  14 August 2014
+
+% To compile, at the command line positioned at this folder, type:
+% latex aspauthor
+% latex aspauthor
+% dvipdfm aspauthor
+% This will create a file called aspauthor.pdf.
+
+%##############################
+% INSTRUCTIONS TO THE AUTHOR
+%------------------------------------------------
+% The Science Book aims to describe in detail the diverse science cases
+% for which the ngVLA will be capable of astronomical breakthroughs. Each
+% contribution will take an idea and develop it in 3 to 7 pages, including
+% at least one illustration. The contributions will describe in detail the
+% scientific rationale including:
+%
+% 1) Description of the problem:
+%   What is the goal? (e.g., study cold molecular outflows from galaxies)
+%
+% 2) Scientific importance:
+%   Why is this a problem worth pursuing? (e.g., they play a key role in enriching the inter-galactic medium)
+%
+% 3) Astronomical impact:
+%   What impact will solving the problem have on the broader astronomy questions? (e.g., they are thought to be a key element of feedback and they play a fundamental role at shaping galaxies)
+%
+% 4) Anticipated results: 
+%  What will be some direct quantitative and qualitative results that will be obtained by the observations?   (e.g., they will mass outflow rates, escape fractions, whether they are closer to energy or momentum conserving, etc)
+%
+% 5) Limitations of current astronomical instrumentation:
+%  Why can't the problem be solved with current/planned instruments? (e.g., mass and surface brightness sensitivity are limited)
+%
+% 6) Connection to unique ngVLA capabilities:
+%   Why is the ngVLA the instrument to address this problem? (e.g., obtaining HI, OH, and CO measurements with unique sensitivity)
+%
+% 7) Experimental layout:  
+%  What are the precise measurements required to solve the problem?   (e.g., sampling physical scales of 100 pc to 100 Mpc and imaging hundreds of galaxies)
+%
+% 8) Complementarity: 
+%   How will the ngVLA information complement or be complemented by observations from other facilities?   (e.g., a key goal for ATHENA will be to study the very hot phase, but the cold phases dominate the mass budget)
+%
+%
+% Authors can either:
+%  - Adopt the 8 suggested categories as their section titles, or 
+%  - Choose their own section titles as long as they cover the 8 suggested categories.
+%
+% All contributions should be written in LaTeX using the ASP style file.
+% A first rough draft of the Science Book chapter is due on December 22nd,
+% and should be either submitted to the corresponding Science Working
+% Group chair
+% <https://science.nrao.edu/futures/ngvla/science-advisory-council>, the
+% ngVLA Project Scientist, or uploaded to the ASP website.
+% The deadline for the final version of the chapters will be March 31st,
+% 2018.
+%
+%##############################
+
+\documentclass[11pt,twoside]{article}
+\usepackage{./asp2014}
+
+\aspSuppressVolSlug
+\resetcounters
+
+\bibliographystyle{asp2014}
+
+\markboth{P.J. Teuben, J.J.Turner, and S. Negusssi }{Short Spacing Issues for Extended Emission} 
+
+\begin{document}
+
+\title{Short Spacing Issues for the Mapping of Milky Way Extended Emission and Nearby Galaxies}
+\author{Peter J. Teuben$^1$, Jordan Turner$^2$ and Sara Negussi$^1$
+\affil{$^1$Astronomy Department, College Park, MD, USA; \email{teuben@astro.umd.edu}}
+\affil{$^2$Department of Physics and Astronomy, Laramie, WY, USA; \email{jturne19@uwyo.edu}}
+\affil{$^3$Astronomy Department, College Park, MD, USA; \email{sara.d.negussie@gmail.com}}}
+
+% This section is for ADS Processing.  There must be one line per author.
+\paperauthor{Peter J. Teuben}{teuben@astro.umd.edu}{0000-0003-1774-3436}{University of Maryland}{Astronomy Department}{College Park}{MD}{20742}{USA}
+\paperauthor{Jordan J. Turner}{jturne19@uwyo.edu}{}{University of Whyoming}{Department of Physics and Astronomy}{Laramie}{WY}{8xxxx}{USA}
+\paperauthor{Sara Negussie}{sara.d.negussie@gmail.com}{}{University of Maryland}{Astronomy Department}{College Park}{MD}{20742}{USA}
+
+%Please include a brief abstract that will be used by ADS for searching purposes.  
+\begin{abstract}
+\end{abstract}
+
+\section{Introduction}
+
+The next generation Very Large Array will provide unprecedented
+resolution and sensitivity at radio frequencies from 1 to 115 GHz.
+For studies of nearby galaxies (z<0.1), the ngVLA as conceived will
+enable efficient mapping of neutral hydrogen, carbon monoxide, and the
+cm to mm-radio continuum, revealing the broad brush physical
+characteristics of molecular clouds and galaxy disks as well as small
+structural features such as molecular clouds cores and protoplanetary
+disks on milli-arcsecond (parsec) scales.  However, like any
+interferometric array, the ngVLA will not cover all possible
+baselines, and thus it will be limited in its ability to recover the
+true flux for all observed spatial scales.  Full flux recovery is
+particularly important for recovering the spatial structure in line
+and continuum observations of extended objects, and for measuring
+accurate fluxes and precise line ratios for any type of extended
+emission. Since these types of observations are at the core of many of
+the science use cases the ngVLA is designed to tackle, it is important
+to design in the correct flux recovery capabilities. For its baseline
+design the ngVLA would be, otherwise, blind to structures larger than
+20\" in the 3mm window.
+
+
+The alternatives for full flux recovery are of two types: 1) a
+heterogeneous array with at least two different antenna sizes, where a
+fraction of the collecting area is in small diameter dishes that are
+closely packed, and a fraction of the large diameter dishes are
+equipped for total-power (single-dish) operation, or 2) a homogeneous
+array with a large single-dish antenna equipped with an array receiver
+for independent fast mapping. Careful analysis of relevant simulations
+are needed to best understand the optimal array configuration and
+ancillary benefits of either one of these options.
+
+
+This study has the goal of comparing the relative merits of both
+options, and evaluating the best architecture in each case. A ngVLA
+study by D. Frayer has produced a memo (ngVLA memo no. 14) looking at
+the requirements for a ``large single-dish'' option,
+although the evaluation did not look in detail at metrics such as
+``image fidelity'' for realistic astronomical
+targets. The purpose of the study outlined here is to take where that
+memo left to expand the study for the single-dish alternative, while
+at the same time producing a full study for the heterogeneous array
+alternative and discussing the relative technical and operational
+merits of both options.
+
+
+\section{Study Outline (from proposal)}
+
+
+\subsection{Performance of Heterogeneous Array with Total Power Antennas}
+
+\begin{enumerate}
+  
+\item What are the optimal diameters for the small antennas?
+
+\item What is the optimal total collecting area for the small-diameter array?
+  
+\end{enumerate}
+
+We will assume that the nominal design for the main (large) dishes of
+the ngVLA is 18m diameter with a minimum separation of 1.5 times the
+antenna diameter, and study the optimal sizes and number for the small
+diameter dishes. We will assume that a minimum dish diameter of 5m is
+necessary to fit a standard receiver package which should be the same
+as used in the large antennas, and a separation of 1.5 times the
+diameter at minimum to avoid collisions and collision detection
+(although arrays such as BIMA routinely operated within
+``collision range,'' the extra collision detection and
+avoidance equipment and algorithms are undesirable as they introduce
+cost, performance, and maintenance penalties).
+
+\subsection{What is the optimal collecting area of large antennas equipped with total-power capabilities?}
+
+
+We will look at different metrics for evaluating the optimal
+collecting area of small vs. large diameter arrays, including the idea
+that the surface brightness sensitivity of the tapered main array
+should match that of the small-dishes array and the total power
+antennas (which we understand is the algorithm ALMA employs to
+determine the relative integration times). We will assume that the
+integration times will have to be similar.
+
+
+\subsection{What is the image fidelity performance?}
+
+
+In order to assess the image reconstruction in a quantitative way, we
+will use a number of realistic models, ranging from a rotating galaxy,
+to Koda \& Teuben (2019, in prep) high resolution power spectrum
+molecular cloud simulation. Measures such as flux recovery, power
+spectrum and rotation curve can be extracted to assign a value to the
+fidelity. We will either use the traditional ``feather''
+technique of combining the different resolution data, or if
+appropriate, the new TP2VIS joint-deconvolution method, but not
+compare the two methods.
+
+
+\subsection{What are the gain stability requirements if any?}
+
+
+The effects of atmospheric fluctuations can be added for this as well,
+although likely they are unimportant for the baselines we would
+consider. Gain stability requirements on this assessment will be
+determined in the process (cf. Mason 2013), if applicable.
+
+
+\subsection{What are the likely observing strategies?}
+
+
+We also want to address observing strategies in the difference
+scenarios. For example, if the correlator allows observations with
+cross-correlations of the large (18m) and small (6m) dishes, this will
+improve the calibration, as well as the net collecting area, but it
+would require simultaneous observing.
+
+
+Similarly, will the TP antennas go in and out of the ngVLA array? Or
+stay by themselves (the current ALMA model, although plans are to
+integrate them). This impacts collecting area optimization/cost.
+
+
+Performance of a Homogeneous Array with a Large Single Dish Complement
+
+A large single dish (SD) with array receivers, as was discussed by
+Frayer (2017) will also be considered in our simulations. We will
+compare the various aspects as we discussed with the heterogenous
+array and contrast them. Frayer discussed one particular source, we
+would expand this to the larger set of objects we are considering for
+this study. As a result an optimal size of the SD , for given number
+of array receivers, can be expected from this comparison.  An
+advantage of a large SD is that it will be a very nice stand-alone
+instrument. On the other hand, it will require a completely different
+type of maintenance and software.  All of these will need to be
+contrasted as well in the operating budget. The SD part of this study
+will include points D-F above (as points A-C are essentially included
+in the existing Frayer 2017 work).
+
+
+\section{Workplan (from proposal)}
+
+Teuben will be responsible for setting up the simulation scripts (in a
+github repo) as well as collecting the sample input models for the
+simulations. Teuben and Dale's graduate student (Jordan Turner) will
+run and analyze a large series of simulation, supervised by Teuben and
+Dale. We will have regular bi-weekly telecoms, and plan to meet face
+to face twice, once at the start of the project at UW, and once when
+Turner visits Teuben at UMD. Results will be presented at the June
+2018 meeting by the UW team and a final memo produced by the end of
+Summer 2018. We will be in close contact with Brian Mason at NRAO, who
+has carried out similar studies for ALMA, and with David Frayer at
+GBO, author of the SD memo.  From previous experiences by the PI, a
+study such as this one will likely push the boundaries of the CASA
+environment, and will need close interactions with the CASA team.
+
+
+
+
+\section{Deliverables  (from proposal)}
+
+
+We will deliver a memo with the points made above, and images to show
+the total flux recovery and a measure of their recovered structure. In
+addition we plan to publish a set of ``models'' that can be used to
+benchmark the performance for future designs. We will also deliver a
+github repository with the scripts to set up and run such a suite of
+simulations. We will use CASA for the simulation scripts. The github
+repo will be open to the public from the start of the project.
+
+
+
+\section{Goodness of Simulation}
+
+To compare a model ($M$) and a simulation ($S$), one normally would
+just look at the difference map, $D$:
+
+$$
+	D_{ij} = M_{ij} - S_{ij}
+$$
+
+and could use the RMS, $\sigma_D$, as a measure for the comparison, perhaps
+normalized to the model peak.
+
+However, a common measure of the goodness of an image is the
+Fidelity. This is defined from the fidelity map:
+
+$$
+   F_{ij} = {{|M|} \over {|M-S|} }
+$$
+
+instead
+
+$$
+   F_{ij} = {    {|M|} \over {max(|D|, \sigma_D/\sqrt{2})} }
+$$
+
+which gives a localized dynamic range how well emission is
+recovered. It is easy to see that in places where the model and
+simulation cross over each other, the fidelity map will have sharp
+features of arbitrarely large fidelity.
+
+One commonly computes a scalar fidelity, with the idea of giving one
+simple measure how good the simulation approaches the model. One
+version is the one uses in CASA's {\tt simobserve}
+
+$$
+	F_s = {   {max(|M|} \over {\sigma_D}  }
+$$
+
+Another uses the cumulative distibution of fidelities.
+
+And in Pety et al (2004?) the fidelities are binned in 4 pieces, where
+the fidelity is considered where the model map is between 0, 0.03,
+0.1, 0.3 and 1 of the peak value in the map. For each of these the
+median fidelity is computed, of these 4 values the median is computed
+again (or is it the mean).
+
+MADM = medabsdevmed = Median of Absolute Deviations from the Median.
+
+
+\section{Models}
+
+\subsection{Rotating Galaxy with a Flat Rotation Curve}
+
+Sadly we have to use NEMO, because there is no simple way, or we're
+lazy to write this in python?
+
+
+We parametrize the galaxy with a dimensionless number that tells how
+well the density distribution matches to the point where the rotation
+curve becomes flat. This way we can study extreme cases such as a
+constant surface brightness disk vs. an exponentation disk.
+
+Two parameters interesting for a bottom line science question would be
+the central velocity gradient ($dV/dR$) and the value and slope of the
+outer disk rotation curve, which establishes the amount of dark
+matter. The central velocity gradient can also be heavily influenced
+by beam smearing. This is a well understood effect, and needs to be
+taken into account.
+
+\subsection{ISM hierarchical structure}
+
+Here we study a continuum map of hierarchical structure of the ISM
+with a given power law index, where the obvious science number to be
+retrieved is that power law index.
+
+We can use Koda's random map generator, but notice that Koda et al
+(2019) use two tricks: the main emission is centered (this is a
+somewhat subjective procedure), and the emission is given another
+transformation to make it look more like the true ISM.  This doesn't
+make sense to me yet, could that not be done with another power law
+index?
+
+It is certainly true  we don't want sharp edges in maps, since they can give stronger responses by the
+interferometer that we don't need to contribute in for example the Fidelity.
+
+
+
+\section{Simulations}
+
+
+We limit ourselves understanding the ngVLA response to large scale
+structure, and avoid extreme non-gausssian beams that one gets with
+for example the Plains configuration where the antennae are out to
+300km (see discussions by Carilli et al. 2019?)  The Core
+configuration will limit us to 94 antennas of 18m and about 1km
+diameter, but has no baselines short of about 30m.  The Short Baseline
+Array (SBA) consists of 19 dishes of 6m each, filling baselines
+between 12m and 60m. The SBA and Core thus have some overlap between
+30m and 60m
+
+
+
+We also want to limit the declination of the source, as for lower
+declinations the first effect is to create shorter baselines,
+partially the missing short spacing problem go away, but adding in
+less ideal beams and shadowing effects.
+
+We fixed the frequency at 115 GHz, at one extreme end of the frequency
+range of the intended ngVLA range. For the first set of simulations,
+where no artificial noise is added, this is simply a scaling
+factor. If we need to incoorporate realistic noise, the dimensionless
+noise factor that we can use in the simulations will need to be
+calibrated whatever the receivers at a specific frequency
+
+
+
+We used the QAC (Quick Array Combination) toolkit (Teuben, 2019). QAC
+is a simplified frontend to {\tt simobserve}, {\tt clean} and other
+CASA tools and tasks to simplify writing such simulation scripts.  See
+also Appendix A for some details.
+
+\subsection{noise}
+
+We follow the {\tt simplenoise} procedure in CASA's {\tt sm} tool.  In
+this procedure a random noise value is added to each visibility. Since
+at this stage it is not known what the resulting noise in Jy/beam will
+be, this simplenoise is first added to a zero amplitude model, the RMS
+in the dirtymap will then result in the scaling factor that will
+guarentee the requested noise. See also Carili et al. (2017).
+The ngVLA noise calculator (in
+preparation) can then be used to get the appropriate noise value for a
+given observing setup.
+
+In our case of a Core configuration this is probably fairly good for
+low frequency observations, but more sophisticated models where
+amplitude and phase noise can depend on baseline.
+
+\section{Results}
+
+\subsection{Mapping2}
+
+Sara was using mapping2 to study the fidelity as function of dish size for
+only the Core configuration, no SBA. See figure~\ref{fig1}.
+
+
+\articlefigure{fidelity1.png}{fig1}{Fidelity of Core and a single TP dish}
+
+\subsection{Questions}
+
+
+Questions from the mapping2 study we need to answer:
+
+\begin{itemize}
+
+  \item How does $F$ depend on the model (randomization). Here we can pick one
+    (dish,grid) combination and see its variation
+  \item How does $F$ depend on the noise. Here we should pick on grid combination
+    but make the dish-F plot for a few noise levels.
+  \item How ...
+  \item How does $F$ depend on the slope of the structure function. This is
+    a more interesting question that helps calibrating F with an astronomical
+    product (k)
+  
+\end{itemize}
+
+\section*{Appendix A: QAC}
+
+To run a large suite of simulations, it can be very useful to call CASA from the Unix command line,
+and loop over many parameters, e.g.
+
+\footnotesize
+\begin{verbatim}
+  casa --nogui -c vla1.py pixel_m=0.05 niter='[0,5000,15000]' dish=45 pdir='"exp102"' 
+\end{verbatim}
+\normalsize
+
+An example is the {\tt simplenoise} procedure. Here is an example calling {\tt qac\_vla()}, which generates
+a Measurement Set with the correct 1 mJy/beam noise:
+
+\footnotesize
+\begin{verbatim}
+
+  rms = 0.001                                #  request 1 mJy/beam RMS noise (NA)
+  ms1 = qac_vla(pdir,model, noise=-rms)      #  noise<0 triggers it to compute the rms
+  sn0 = qac_noise(noise,pdir+'/noise', ms1)  #  get scaling factor from rms in ms1
+  ms2 = qac_vla(pdir,model, noise=sn0)       #  MS that with correct "rms" in Jy/beam
+\end{verbatim}
+\normalsize
+
+
+
+
+
+
+
+
+
+
+
+
+\acknowledgements We thank Alberto Bolatto, Danny Dale, Lee Mundy ...
+% Keep this text on the same line as the \verb"\acknowledgements" command because it makes things a lot easier.
+
+%\bibliography{editor}  % For BibTex
+
+% For non-BibTex:
+\begin{thebibliography}{}
+
+\bibitem[Carilli (2017)]{memo12} Carilli, C., 2017, ngVLA Memo \#12
+
+% Koda & Teuben (2018, in prep). Ã¢€œTP2VIS: Joint-Deconvolution of ALMA 12m, 7m and TP dataÃ¢€ - A current ALMA study  [to be delivered 31-jan-2018]
+
+% Short Spacing Considerations for the ngVLAÃ¢€ - ngVLA memo #14  
+\bibitem[Frayer (2017)]{memo14} Frayer, A., 2017, ngVLA memo \#14
+
+  
+% Mason (2013), Ã¢€œContinuum Sensitivity of GBT ReceiversÃ¢€ - GBT memo #282
+\bibitem[Mason (2013)]{memo282} Mason, B. 2013, GBT memo \#282
+  
+\end{thebibliography}
+
+\end{document}
