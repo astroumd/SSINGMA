@@ -70,11 +70,12 @@
 
 \bibliographystyle{asp2014}
 
-\markboth{P.J. Teuben, J.A.Turner, and S. Negusssi }{Short Spacing Issues for Extended Emission} 
+\markboth{P.J. Teuben, J.A. Turner, and S. Negusssi }{Short Spacing Issues for Extended Emission} 
 
 \begin{document}
 
-\title{Short Spacing Issues for the Mapping of Milky Way Extended Emission and Nearby Galaxies}
+% \title{Short Spacing Issues for the Mapping of Milky Way Extended Emission and Nearby Galaxies}
+\title{Short Spacing Issues for the Mapping of Extended Emission}
 \author{Peter J. Teuben$^1$, Jordan Turner$^2$ and Sara Negussi$^1$
 \affil{$^1$Astronomy Department, College Park, MD, USA; \email{teuben@astro.umd.edu}}
 \affil{$^2$Department of Physics and Astronomy, Laramie, WY, USA; \email{jturne19@uwyo.edu}}
@@ -87,6 +88,16 @@
 
 %Please include a brief abstract that will be used by ADS for searching purposes.  
 \begin{abstract}
+
+In this memo we study the fidelity of images obtained with various
+combinations of the ngVLA Core, Short Baseline Array and a total power
+dish, and make recommendations what configuration is best suited to
+recover large scale stuctures in wide field imaging.
+
+
+\center{{\it \bf This is still a draft, do not distribute.}}
+
+
 \end{abstract}
 
 \section{Introduction}
@@ -250,7 +261,7 @@ environment, and will need close interactions with the CASA team.
 \section{Deliverables  (from proposal)}
 
 
-We will deliver a memo with the points made above, and images to show
+We will deliver a memo (this memo) with the points made above, and images to show
 the total flux recovery and a measure of their recovered structure. In
 addition we plan to publish a set of ``models'' that can be used to
 benchmark the performance for future designs. We will also deliver a
@@ -407,7 +418,7 @@ only the Core configuration, no SBA. See figure~\ref{fig1}.
 
 \articlefigure{fidelity1.png}{fig1}{Fidelity of Core and a single TP dish}
 
-\subsection{Questions}
+\subsection{Questions-1}
 
 
 Questions from the mapping2 study we need to answer:
@@ -425,7 +436,52 @@ Questions from the mapping2 study we need to answer:
   
 \end{itemize}
 
-\section*{Appendix A: QAC}
+\subsection{Questions-2}
+
+Back to the vla2 script, we need to address:
+
+\begin{itemize}
+
+  \item set out the proper weights between SBA and Core
+  \item repeat questions in mapping2, now with and without TP dish
+  \item ...
+\end{itemize}
+
+\section{Results}
+
+The results from the ngVLA presentation (in terms of Fidelity)
+\begin{itemize}
+  \item core:  26
+  \item TP18 + core: 31
+  \item TP18 + SBA + core: 45
+  \item TP45 + core: 62
+  \item TP100 + core: 162
+\end{itemize}
+
+
+
+\subsection{Feather vs. Joint Deconvolution}
+
+The ``feather'' method does a very good job (by design) of fixing the total flux. There is
+very little (meaningless?) variation, like for example with the Fidelity, as one varies
+the dish size or other parameters to determine an optimal value for said dish size.
+Other means to compare the results are the amount of positive and negative flux,
+and the peak flux. This better addresses the ``missing flux'' problem so central to the
+issue of missing short spacings.
+
+A joint deconvolution approach for a mosaiced field works very differently, as it solves the
+FFT in each field separately, a more honest approach. Whereas the ``feather'' method in those
+cases will take
+
+We could expect that for a single mosaiced field, feather and joint deconvolution give more similar results
+
+It is unclear as of this writing, if the JD method will be discussed here, as then the paper becomes more
+one of comparing the two methods (but in the end, isn't the JD where the better images should come from?).
+It may be better to postpone this approach for the journal paper, not the white paper.
+
+
+
+\section*{Appendix A: QAC (Quick Array Combinations)}
 
 To run a large suite of simulations, it can be very useful to call CASA from the Unix command line,
 and loop over many parameters, e.g.
@@ -436,19 +492,28 @@ and loop over many parameters, e.g.
 \end{verbatim}
 \normalsize
 
-An example is the {\tt simplenoise} procedure. Here is an example calling {\tt qac\_vla()}, which generates
-a Measurement Set with the correct 1 mJy/beam noise:
+As one of the products of the ``tp2vis'' ALMA development study (Teuben 2019) we continued the development of the
+Quick Array Combination (QAC) toolkit that simplifies writing some of these complex scripts. It also allow us
+to use a different combination
+method (feather, tp2vis, ssc etc.) with minimal changes to the simulations scripts.
+
+As an example, consider the {\tt simplenoise} procedure to add a given noise to a simulation.
+Here is the example calling {\tt qac\_vla()} twice, in the end generating a Measurement Set with
+the correct 1 mJy/beam noise:
 
 \footnotesize
 \begin{verbatim}
 
-  rms = 0.001                                #  request 1 mJy/beam RMS noise (NA)
+  rms = 0.002                                #  request 2 mJy/beam RMS noise (NA)
   ms1 = qac_vla(pdir,model, noise=-rms)      #  noise<0 triggers it to compute the rms
   sn0 = qac_noise(noise,pdir+'/noise', ms1)  #  get scaling factor from rms in ms1
   ms2 = qac_vla(pdir,model, noise=sn0)       #  MS that with correct "rms" in Jy/beam
 \end{verbatim}
 \normalsize
 
+In the first Measurement Set a noise level is computed for a fixed 1 Jy noise per visiblity on a
+zero model. The noise in the resulting dirty map, computed in {\tt qac\_noise()}, is then the scaling factor ({\tt sn0}
+that needs to be applied to get the correct requested noise level in the second Measurement Set.
 
 
 
@@ -470,15 +535,38 @@ a Measurement Set with the correct 1 mJy/beam noise:
 
 \bibitem[Carilli (2017)]{memo12} Carilli, C., 2017, ngVLA Memo \#12
 
-% Koda & Teuben (2018, in prep). Ã¢€œTP2VIS: Joint-Deconvolution of ALMA 12m, 7m and TP dataÃ¢€ - A current ALMA study  [to be delivered 31-jan-2018]
+% resolution and sensitivity of ngvla-revB  
+\bibitem[Carilli (2018)]{memo43} Carilli, C., 2018, ngVLA Memo \#43
 
-% Short Spacing Considerations for the ngVLAÃ¢€ - ngVLA memo #14  
+% Koda & Teuben (2018, in prep). TP2VIS: Joint-Deconvolution of ALMA 12m, 7m and TP data - A current ALMA study  [to be delivered 31-jan-2018]
+
+% Short Spacing Considerations for the ngVLA - ngVLA memo #14  
 \bibitem[Frayer (2017)]{memo14} Frayer, A., 2017, ngVLA memo \#14
 
-  
-% Mason (2013), Ã¢€œContinuum Sensitivity of GBT ReceiversÃ¢€ - GBT memo #282
+
+% Mason (2013), Continuum Sensitivity of GBT Receivers - GBT memo #282
 \bibitem[Mason (2013)]{memo282} Mason, B. 2013, GBT memo \#282
+
+% ngVLA short baseline array  
+\bibitem[Mason et al. (2018)]{memo43} Mason, B. et al. 2018, ngVLA memo \#43
+
+%  relative integration times 12m, 7m, TPA
+\bibitem[Mason and Brogan (2017)]{memo598} Mason, B. and Brogan, C. 2017, ALMA memo \#598
+  
+
+
+%  impact of ACA on the wide field imaging capaboilities of ALMA
+
+\bibitem[Pety et al. (2001)]{memo398} Pety, J. et al. 2001, ALMA memo \#398
+  
   
 \end{thebibliography}
 
 \end{document}
+
+
+
+
+  
+
+  
