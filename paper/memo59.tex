@@ -1,0 +1,156 @@
+% a longer version of this was submitted for the ngVLA project as a memo.
+
+\documentclass[11pt,twoside]{article}
+\usepackage{asp2014}
+\aspSuppressVolSlug
+\resetcounters
+
+\bibliographystyle{asp2014}
+
+\markboth{Teuben}{QAC}
+
+\begin{document}
+
+\title{ngVLA Memo No. 59: \\ QAC: Quick Array Combinations with CASA}
+\author{Peter Teuben}
+\affil{Astronomy Department, University of Maryland, College Park, MD, USA}
+
+\paperauthor{Teuben~Peter}{teuben@astro.umd.edu}{0000-0003-1774-3436}{Astronomy Department}{University of Maryland}{College Park}{MD}{20742}{USA}
+
+%\aindex{Teuben,~P.~J.}
+
+\begin{abstract}
+
+A simple python layer in CASA was developed to aid in writing scripts
+for array (single dish and interferometric) combination. Although
+initially developed for TP2VIS, running simulations and comparing with
+other array combination methods, and adding regressions became
+cumbersome, and QAC was developed. Both ALMA, ngVLA and CARMA
+simulations are already supported, but extending to more generic array
+are planned. This memo complements ngVLA memo 54, where QAC was used.
+
+\end{abstract}
+
+%\ooindex{CASA, ascl:1107.013} 
+
+%\ssindex{instruments!interferometer}
+%\ssindex{astronomy!radio!single-dish}
+%\ssindex{packages!Common Astronomy Software Applications (CASA)}
+
+
+\section{Introduction}
+
+CASA (\citet{casa1} and in this volume \citet{casa2}) 
+is a general purpose python interface to radio
+astronomy software. It handles interferometric as well as single dish
+observations, all the way from calibration and mapping to
+analysis. Most ALMA and VLA data are now routinely processed with CASA
+using a pipeline.  Users that use CASA can use object oriented
+``tools'', or more classic python functions, called
+``tasks''. One can write very complex tasks this way.
+
+The effect of adding short spacings can be dramatic.
+
+In a previous project, the ADMIT project had a similar challenge, but
+additional more complex boundary conditions.
+
+The development of QAC started with the TP2VIS project, to provide a
+more easily programmable interface. It can be obtained from
+\url{https://github.com/teuben/QAC}.
+
+\section{Install}
+
+The traditional way to add software to a python based system (which CASA is), would be the
+python {\tt import} command, but in the current version of CASA\footnote{this may change}
+the more pragmatic approach is to ``execfile'' a script, which either adds an API to the
+environment and/or executes code.
+
+Incidentally, if these are combined and only one script needs to be executed and then analyzed
+outside of CASA, a very efficient way it to use could be to call casa from the command line
+
+\footnotesize
+\begin{verbatim}
+    % casa --nogui -c myscript.py a=1 b='"b"' c='[1,2,3]' > myscript.log 2&>1
+\end{verbatim}
+\normalsize
+
+There are a number of ways how QAC can be installed (integrated) into CASA.
+Traditionally users would use
+``{\tt     execfile('myscript.py')}''
+from the CASA (i.e. python ) prompt. But if this is all the user needs, it can
+also be replaced by a unix command line version
+``{\tt     casa -c myscript.py}''
+instead. The overhead of setting up casa before this script really starts work
+varies a lot depending on cashing and what's in the casa init files, but can
+be anywhere from 5 to 20 seconds, comparable to booting a laptop.
+
+The installation of CASA is required to run QAC, and the user can opt either to install a version
+of CASA from within QAC, or assume a version of CASA that is present on the system.
+
+\section{Example}
+
+A typical usage would be
+
+\begin{verbatim}
+    % casa --nogui -c 
+\end{verbatim}
+
+
+\section{docs}
+
+A typical simulation script might look as follows. Explanations follow later:
+
+\footnotesize
+\begin{verbatim}
+    qac_ptr(phasecenter,"test123.ptg")
+    qac_vla("test123","skymodel.fits", 4096, 0.01, ptg="test123.ptg",
+            phasecenter=phasecenter)
+            
+    qac_clean1("test123/clean1",phasecenter=phasecenter)
+\end{verbatim}
+\normalsize
+
+\section{Timing and Regression}
+
+Because QAC deal almost exclusively with image type data, the regression test is invoked automatically
+with the statistics report, if a regression string (!) is given, viz.
+
+\footnotesize
+\begin{verbatim}
+r = "0.0038324084555372423 0.021439742878458009 -0.048513446003198624
+     0.41929447650909424 383.60327838373536"
+qac_stats(test+'/clean/tpint.image')
+qac_stats(test+'/clean/tpint_4.tweak.image', r)
+\end{verbatim}
+\normalsize
+
+where in the first instance only the statistics are reported, the second instance will also flag any deviations.
+The numbers represent the mean, std, min, max and total flux of the image.
+
+\section{Benchmarks}
+
+A better supported show of QAC functionality is currently in the **test/bench.py, bench0.py** and **sky1.py** rout
+ines [March 2018] as those were used in the
+[SD2018](\url{https://github.com/teuben/sd2018}) workshop. Please note the software in that repo is not maintained anymo
+re, and updated versions can be found
+within QAC.
+
+\section{API}
+
+
+
+
+\section{Future}
+
+CASA is a development project, the next
+release will have a major overhaul how python and the C++ libraries
+are integrated, and this will likely have some effect how QAC is
+installed, although less on its API. 
+
+\acknowledgements Jordan Turner and Sara Negussie have been patient contributers and users.
+Part of QAC was developed under the ALMA development study ``TP2VIS''  (PI: Jin Koda) and
+the ``ngVLA'' array combination study (ngVLA memo 54)
+
+\bibliography{qac}
+
+\end{document}
