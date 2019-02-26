@@ -12,3 +12,11 @@ pdf2:
 	latex teuben_shortspacing.tex
 	latex teuben_shortspacing.tex
 	dvipdfm teuben_shortspacing.dvi
+
+qac:
+	latex memo-qac.tex
+	latex memo-qac.tex
+	bibtex memo-qac
+	latex memo-qac.tex
+	latex memo-qac.tex
+	dvipdfm memo-qac
