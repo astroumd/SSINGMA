@@ -2,6 +2,13 @@
 
 
 #
+qac:
+	latex memo59.tex
+	latex memo59.tex
+	bibtex memo59
+	latex memo59.tex
+	latex memo59.tex
+	dvipdfm memo59
 
 # this works for PJT
 pdf1:
@@ -13,10 +20,3 @@ pdf2:
 	latex teuben_shortspacing.tex
 	dvipdfm teuben_shortspacing.dvi
 
-qac:
-	latex memo-qac.tex
-	latex memo-qac.tex
-	bibtex memo-qac
-	latex memo-qac.tex
-	latex memo-qac.tex
-	dvipdfm memo-qac
