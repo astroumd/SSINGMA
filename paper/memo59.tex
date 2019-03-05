@@ -2,6 +2,11 @@
 
 \documentclass[11pt,twoside]{article}
 \usepackage{asp2014}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{siunitx}
+
+
 \aspSuppressVolSlug
 \resetcounters
 
@@ -27,7 +32,10 @@ initially developed for TP2VIS, running simulations and comparing with
 other array combination methods, and adding regressions became
 cumbersome, and QAC was developed. Both ALMA, ngVLA and CARMA
 simulations are already supported, but extending to more generic array
-are planned. This memo complements ngVLA memo 54, where QAC was used.
+are planned. This memo complements ngVLA memo 54, where
+QAC\footnote{this memo describes QAC as of February 2019}
+was used.
+
 
 \end{abstract}
 
@@ -40,10 +48,10 @@ are planned. This memo complements ngVLA memo 54, where QAC was used.
 
 \section{Introduction}
 
-CASA (\citet{casa1} and in this volume \citet{casa2}) 
+CASA (\citet{casa1}, \citet{casa2}) 
 is a general purpose python interface to radio
 astronomy software. It handles interferometric as well as single dish
-observations, all the way from calibration and mapping to
+observations, all the way from ingestion, calibration and mapping to
 analysis. Most ALMA and VLA data are now routinely processed with CASA
 using a pipeline.  Users that use CASA can use object oriented
 ``tools'', or more classic python functions, called
@@ -60,10 +68,30 @@ more easily programmable interface. It can be obtained from
 
 \section{Install}
 
-The traditional way to add software to a python based system (which CASA is), would be the
-python {\tt import} command, but in the current version of CASA\footnote{this may change}
+CASA interacts with the user in an interactive python (ipython) session. For most users adding 
+C++ code is a complex operation, but installing new python interfaces is usually fairly
+straightforward. Several methods exist:
+
+
+
+\begin{itemize}
+
+  \item \verb+buildmytasks+
+
+The CASA Users Guide describes a procedure to install new tasks, but at the same
+time warns this method may get deprecated. Nonetheless, this so-called ``buildmytasks'' has been
+used, most notably by the Nordic ARC node\footnote{\url{https://www.oso.nordic-alma.se/software-tools.php}}.
+
+  
+
+  \item \verb+import foo+
+
+The traditional way a user includes software to a python based system (which CASA is),
+would be the python {\tt import} command, but in the current version of
+CASA\footnote{this will change in CASA 6}
 the more pragmatic approach is to ``execfile'' a script, which either adds an API to the
-environment and/or executes code.
+environment and/or executes code. For QAC we decided to ``execfile'' the API, after
+which user scripts can write compact and flexible scripts.
 
 Incidentally, if these are combined and only one script needs to be executed and then analyzed
 outside of CASA, a very efficient way it to use could be to call casa from the command line
@@ -85,7 +113,40 @@ varies a lot depending on cashing and what's in the casa init files, but can
 be anywhere from 5 to 20 seconds, comparable to booting a laptop.
 
 The installation of CASA is required to run QAC, and the user can opt either to install a version
-of CASA from within QAC, or assume a version of CASA that is present on the system.
+of CASA from within QAC, or assume a version of CASA that is present on the system, i.e. there
+is a command called ``casa''.
+
+
+
+
+  \item \verb+import foo+ 
+
+    this is fine for stable software, and can be installed with python's setuptools in casa
+    In future casa6 one should be able to use virtualenv to test out software like this
+    without the need to write into CASA's personal space.
+
+  \item \verb+execfile('foo.py')+ 
+
+    after which an API is available  (note this will not work on Python3)
+
+  \item  \verb+run foo.py p1 p2 p3+ 
+
+    this will need a parser for sys.argv[1] (p1), sys.argv[2] (p2), etc.
+    note this is an ipython interface, not python, though it's similar to
+    running in the unix shell \verb+python foo.py p1 p2 p3+
+                           
+  \item   \verb+%run -m foo+
+
+    Runs the foo module (from sys.path). In the current casa manipulating sys.path is
+    not  recommended
+
+  \end{itemize}
+
+Miles Lucas made his summer-2019 toolkit Radio Imaging Combination Analysis (RIKA)
+available\footnote{\url{https://gitlab.com/mileslucas/RICA}}. He uses the 3rd (run) method.
+In QAC we decided to use the 2nd (execfile) method.
+
+
 
 \section{Example}
 
@@ -129,15 +190,210 @@ The numbers represent the mean, std, min, max and total flux of the image.
 
 \section{Benchmarks}
 
-A better supported show of QAC functionality is currently in the **test/bench.py, bench0.py** and **sky1.py** rout
-ines [March 2018] as those were used in the
-[SD2018](\url{https://github.com/teuben/sd2018}) workshop. Please note the software in that repo is not maintained anymo
-re, and updated versions can be found
+A better supported show of QAC functionality is currently in the **test/bench.py, bench0.py** and **sky1.py** routines [March 2018]
+as those were used in the
+[SD2018](\url{https://github.com/teuben/sd2018}) workshop. Please note the software in that repo is not maintained anymore,
+and updated versions can be found
 within QAC.
 
 \section{API}
 
+Here we list the most important functions available in QAC, and a brief explanation where needed. The full and updated
+documentation can be seen online on \url{https://github.com/teuben/QAC/blob/master/docs/qac.md}.
 
+\footnotesize
+\begin{verbatim}
+
+## Logging
+
+Standard CASA logging is used, and you can use the python **print** function
+in the usual way.  You can use the function
+
+    qac_log(msg)
+
+to space your output with a header type message.
+
+Every qac_ command will tag the output with a timestamp, and optionally measure
+virtual and real memory. This is added to the standard python **logging** output.
+But you must start and end your code as follows:
+
+    qac_begin("test1-alma")
+    qac_version()
+    ....
+    qac_end()
+
+
+## Simulation routines
+
+As mentioned before,the project directory is within which all the work occurs. Some routines will accumulate
+(e.g. qac_vla()), others will remove that project directory and rebuild that directory (e.g. qac_clean1). The
+user will remember to orchestrate them inside each where needed, e.g.
+
+    qac_vla("test1", cfg=0, ...
+    qac_clean1("test1/clean0", ...
+    
+    qac_vla("test1", cfg=1, ...
+    qac_clean1("test1/clean1", ...
+
+    mslist = glob.glob("test1/*.ms")
+    qac_clean1("test1/clean2", mslist, ...)
+
+
+### qac_vla(project, skymodel, imsize, pixel, phasecenter, freq, cfg, ptg, noise)
+
+This is usually how you start a simulation, from a skymodel you create a measurement set reprenting a configuration.
+Since the ngVLA can have multiple configurations, you would need call this routine multiple times, e.g.
+
+    qac_vla("test1", cfg=0, ...)
+    qac_vla("test2", cfg=0, ...)
+
+Setting different  weights based on dish sizes will need to be implemented. See also qac_alma(). See also
+[**simobserve()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_simobserve/about)
+
+#### input parameters:
+```python
+qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, ptg=None, times=[0.3333333333333333, 1], fix=0, noise=0)
+    """
+    project     str         working directory for the simulation
+    skymodel    str         input image used as a model of the sky. can be CASA image or FITS file
+    imsize      int/float   desired skymodel image size in pixels i.e. 512, 1024, 2048, 4096, etc.
+    pixel       int/float   desired skymodel pixel size in arcsecs i.e. 1" per pixel, 0.5" per pixel,   etc.
+    phasecenter str         the central direction to place the sky model image, or "" or None to use    whatever is in the image already.
+    cfg         int         desired ngVLA configuration:
+                                        # ant   cfg_name            extent  comments
+                            cfg = 0     19      ngvla-sba-revB      < 60m   6m dishes
+                            cfg = 1     94      ngvla-core-revB     < 1km
+                            cfg = 2     214     ngvla-plains-revB   < 30km 
+                            cfg = 3     225     ngvla-gb-vlba-revB  <       [+ 5 25m VLBI dishes, +5 18m    at GBO]
+    ptg         str         filename of the pointing file which can be created by qac_im_ptg
+    times       list        observation lengths and integration intervals in a list of length 2. times[ 0] = total observation length in hours, times[1] = interval for each integration in seconds. e.g. 4  hour observation with 1 second integrations: times = [4, 1]
+    fix         int         if fix=1, removes pointing table. fix=0 is default
+    noise       int/float   desired simplenoise (in Jy) to add to the measurement set. default noise=0,     no noise added
+    
+    """
+```
+
+### qac_alma(project, skymodel, imsize, pixel, phasecenter, freq, cycle, cfg, ptg)
+
+Just for kicks, we have way to create ALMA observations from diffent cycle's and cfg's. We automatically add
+a visweightscale to the WEIGHT column to properly account for the dish size if you do a combination tclean.
+
+### qac_noise(noise, *args, **kwargs)
+
+In the case where you want to empirically set the noise to a certain level, this routine will help you determine
+the proper scaling factor for the sm.setnoise() function in simulation tool. So far
+this is only used in qac_vla()
+
+### qac_clean1(project, ms, imsize, pixel, niter, weighting, startmodel, phasecenter, **line)
+
+This is simply a front end to CASA's **tclean()**. Interesting note is that **niter** can be a list here,
+e.g. niter=[0,1000,2000], thus creating a series of dirtymaps, showing the progression of clean.
+
+[**tclean()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_tclean/about)
+
+#### input parameters:
+```python
+qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting='natural', startmodel='', phasecenter='', t=True, **line)
+    """
+    project     str         new working directly as it will be removed before starting
+    ms          str         input measurement set to be cleaned. can be single MS or a list
+    imsize      int/float   image size in pixels used in the imaging
+    pixel       int/float   pixel size in arcsecs used in the imaging
+    niter       int         iterations for cleaning. can be single number or a list. niter = 0, no  cleaning done, outputs dirty image
+    weighting   str         options for data weighting: natural, uniform, or robust
+    startmodel  str         starting model in Jy/pixel
+    phasecenter str         mapping center
+    t           bool        True means tclean. False means try and fallback to old clean()
+    **line                  user can provide any other (t)clean parameters like restfreq or width here
+    
+    """
+```
+
+### qac_tp_otf(project, skymodel, dish, label, freq, template)
+
+Create the OTF map via a simple smooth.
+
+NOTE: **simobserve** also has an **obsmode=sd** keyword, which creates
+a Measurement Set representing the autocorrelations of a TP (sd) map. After this you would need to map
+this MS into a casa image, using the
+[**sdimaging()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_sdimaging/about)
+task.
+
+See Mangum et al.'s (2007) paper : https://www.aanda.org/articles/aa/pdf/2007/41/aa7811-07.pdf
+
+### qac_tp_vis(project, imagename, ptg, pixel, niter, phasecenter, rms, maxuv, nvgrp, fix, deconv, **line)
+
+TP2VIS method. Not covering here yet. Like qac_alma(), you can reset the pixel size here.
+
+
+### qac_feather(project, highres, lowres, label, niteridx)
+
+Feather two maps that were created from qac_clean1 and qac_tp_otf
+
+### qac_ssc(project, highres, lowres)
+
+
+
+### qac_smooth(project, skymodel, label, niteridx)
+
+Smooth a skymodel so it can be compared to a (feathered for now) map.
+
+
+## Helper routines
+
+### qac_stats
+
+### qac_beam
+
+### qac_tpdish
+
+This will depend on fixing the vpmanager interface to tp2vis, but this is where you define a new dish size
+to override the default ALMA 12m model
+
+### qac_phasecenter
+
+### qac_ptg
+
+We should re-import the qac_im_ptg routine from qtp. See below.
+
+### qtp_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None)
+
+this should possibly become an qac_im_ptg 
+
+### qac_summary
+
+### qac_math
+
+Just a super simple front-end to immath, so we can wrote code such as
+
+    qac_math(out, in1, '+', in2)
+
+it only allows the four basic operators combining two maps. Partially driven because immath
+does not have the overwrite=True option.
+
+### qac_mom
+
+Compute moments 0,1 (and soon 2) in some standard way, so we can compare simulations and skymodels.
+
+[**immoments()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_immoments)
+
+### qac_plot(image, box, plot)
+
+Create a simple colorimage from a casa imasge. By default it appends "png" to the current name.
+
+### qac_flux(image, box, dv, plot)
+
+Create a plot showing flux as function of channel. Good to compare flux comparisons
+between various simulations and skymodels.
+
+### qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidelityim=None, absmodelim=None, interactive=False)
+
+Calculates the fidelity between a model and observed image.
+
+
+
+\end{verbatim}
+\normalsize
 
 
 \section{Future}
@@ -149,8 +405,66 @@ installed, although less on its API.
 
 \acknowledgements Jordan Turner and Sara Negussie have been patient contributers and users.
 Part of QAC was developed under the ALMA development study ``TP2VIS''  (PI: Jin Koda) and
-the ``ngVLA'' array combination study (ngVLA memo 54)
+the ``ngVLA'' array combination study (ngVLA memo 54).
 
 \bibliography{qac}
+
+\newpage
+\section*{Appendix A: Sample Code}
+
+
+To run a large suite of simulations, it can be very useful to call CASA from the Unix command line,
+and loop over many parameters, e.g.
+
+\footnotesize
+\begin{verbatim}
+  casa --nogui -c vla1.py pixel_m=0.05 niter='[0,5000,15000]' dish=45 pdir='"exp102"' 
+\end{verbatim}
+\normalsize
+
+As one of the products of the ``tp2vis'' ALMA development study (Teuben 2019) we continued the development of the
+Quick Array Combination (QAC) toolkit that simplifies writing some of these complex scripts. It also allow us
+to use a different combination
+method (feather, tp2vis, ssc etc.) with minimal changes to the simulations scripts.
+
+As an example, consider the {\tt simplenoise} procedure to add a given noise to a simulation.
+Here is the example calling {\tt qac\_vla()} twice, in the end generating a Measurement Set with
+the correct 1 mJy/beam noise:
+
+\footnotesize
+\begin{verbatim}
+
+ rms = 0.002                               #  request 2 mJy/beam RMS noise (NA)
+ ms1 = qac_vla(pdir,model, noise=-rms)     #  noise<0 triggers it to compute the rms
+ sn0 = qac_noise(noise,pdir+'/noise', ms1) #  get scaling factor from rms in ms1
+ ms2 = qac_vla(pdir,model, noise=sn0)      #  MS that with correct "rms" in Jy/beam
+\end{verbatim}
+\normalsize
+
+In the first Measurement Set a noise level is computed for a fixed 1 Jy noise per visiblity on a
+zero model. The noise in the resulting dirty map, computed in {\tt qac\_noise()}, is then the scaling factor ({\tt sn0}
+that needs to be applied to get the correct requested noise level in the second Measurement Set.
+
+
+
+
+
+
+
+
+% figures
+\newpage
+
+\begin{figure}
+\centering
+\includegraphics[width=0.49\columnwidth]{figs54/psd1_revised.png}
+\includegraphics[width=0.49\columnwidth]{figs54/psd2_revised.png}
+\caption{Power spectrum density as compared to the smoothed input model (black squares). The left figure shows the power spectrum for the cleaned image with just the ngVLA Core (red) and the cleaned image with both the short baseline array and the core (green). The right figure shows the total power and interferometric feathered images for each single-dish tested: \SI{18}{\meter} dish (cyan), \SI{45}{\meter} dish (magenta), and \SI{100}{\meter} dish (blue).}
+\label{fig:psd}
+\end{figure}
+
+
+
+
 
 \end{document}
