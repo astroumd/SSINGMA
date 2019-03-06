@@ -1,5 +1,8 @@
 % a longer version of this was submitted for the ngVLA project as a memo.
 
+%  http://ngvla.nrao.edu/page/memos
+%  https://library.nrao.edu/ngvla.shtml
+
 \documentclass[11pt,twoside]{article}
 \usepackage{asp2014}
 \usepackage{graphicx}
@@ -26,15 +29,15 @@
 
 \begin{abstract}
 
-A simple python layer in CASA was developed to aid in writing scripts
-for array (single dish and interferometric) combination. Although
+QAC is a simple python layer in CASA, developed to aid in writing scripts
+for array (single dish and interferometric) combinations. Although
 initially developed for TP2VIS, running simulations and comparing with
-other array combination methods, and adding regressions became
-cumbersome, and QAC was developed. Both ALMA, ngVLA and CARMA
+other array combination methods, this package turned out to be useful
+for array design studies as well. Both ALMA, ngVLA and CARMA
 simulations are already supported, but extending to more generic array
 are planned. This memo complements ngVLA memo 54, where
 QAC\footnote{this memo describes QAC as of February 2019}
-was used.
+was used for an array design study..
 
 
 \end{abstract}
@@ -51,102 +54,176 @@ was used.
 CASA (\citet{casa1}, \citet{casa2}) 
 is a general purpose python interface to radio
 astronomy software. It handles interferometric as well as single dish
-observations, all the way from ingestion, calibration and mapping to
+data, all the way from ingestion, calibration and mapping to
 analysis. Most ALMA and VLA data are now routinely processed with CASA
-using a pipeline.  Users that use CASA can use object oriented
+using a custom built pipeline.  CASA Users use object oriented
 ``tools'', or more classic python functions, called
-``tasks''. One can write very complex tasks this way.
+``tasks'' in CASA. One can write very complex tasks this way, and in fact, the
+ALMA/VLA pipeline is an example of such an interface. The QAC
+interfaces we discuss in this memo were also designed with a specific
+goal of testing the combination of single dish and interferometric data, and
+for example are ideal for array design studies.
 
-The effect of adding short spacings can be dramatic.
+% The effect of adding short spacings can be dramatic.
 
-In a previous project, the ADMIT project had a similar challenge, but
-additional more complex boundary conditions.
+% In a previous project, the ADMIT project had a similar challenge, but
+% additional more complex boundary conditions.
 
-The development of QAC started with the TP2VIS project, to provide a
-more easily programmable interface. It can be obtained from
-\url{https://github.com/teuben/QAC}.
+The development of QAC started in 2017 with the TP2VIS project \citep{tp2vis}, to provide a
+more easily programmable interface, orchestrate simulations and provide a
+reproducable baseline. It can be obtained from \url{https://github.com/teuben/QAC}.
 
-\section{Install}
+We first summarize the different methods how CASA can be extended by using your own
+custum built python code, then how QAC is installed, and a typical usage. We also give a short
+summary of the API, and publish a benchmark in the Appendix. Given that QAC is available
+in github, you will likely find updates to QAC (and this memo) in this repository.
+
+\section{Running python code in CASA}
 
 CASA interacts with the user in an interactive python (ipython) session. For most users adding 
-C++ code is a complex operation, but installing new python interfaces is usually fairly
-straightforward. Several methods exist:
-
+C++ code is a complex operation, but installing new python interfaces to ease writing CASA scripts
+is usually fairly straightforward, and nowadays most users are familiar with this.
+Several methods (and hybrid between these) exist
+for CASA:\footnote{some of these methods are expected to become more common in CASA6}
 
 
 \begin{itemize}
 
-  \item \verb+buildmytasks+
+\item[1.] \verb+buildmytasks+
 
-The CASA Users Guide describes a procedure to install new tasks, but at the same
-time warns this method may get deprecated. Nonetheless, this so-called ``buildmytasks'' has been
-used, most notably by the Nordic ARC node\footnote{\url{https://www.oso.nordic-alma.se/software-tools.php}}.
-
-  
-
-  \item \verb+import foo+
-
-The traditional way a user includes software to a python based system (which CASA is),
-would be the python {\tt import} command, but in the current version of
-CASA\footnote{this will change in CASA 6}
-the more pragmatic approach is to ``execfile'' a script, which either adds an API to the
-environment and/or executes code. For QAC we decided to ``execfile'' the API, after
-which user scripts can write compact and flexible scripts.
-
-Incidentally, if these are combined and only one script needs to be executed and then analyzed
-outside of CASA, a very efficient way it to use could be to call casa from the command line
+This is the native CASA method. The CASA Cookbook describes a
+procedure to install new CASA tasks, but at the same time warns this
+method may get deprecated. Nonetheless, this so-called
+``buildmytasks'' has been used by other teams, most notably by the Nordic ARC
+node\footnote{\url{https://www.oso.nordic-alma.se/software-tools.php}}. This
+is typically run once inside the directory where your {\tt foo.py}, {\tt foo.xml},
+and other material is present, after which the code, and documentation, gets installed
+at the right place inside the CASA tree.
 
 \footnotesize
 \begin{verbatim}
-    % casa --nogui -c myscript.py a=1 b='"b"' c='[1,2,3]' > myscript.log 2&>1
+    foo(1,'b',[1,2,3])
 \end{verbatim}
 \normalsize
 
-There are a number of ways how QAC can be installed (integrated) into CASA.
-Traditionally users would use
-``{\tt     execfile('myscript.py')}''
-from the CASA (i.e. python ) prompt. But if this is all the user needs, it can
-also be replaced by a unix command line version
-``{\tt     casa -c myscript.py}''
-instead. The overhead of setting up casa before this script really starts work
+\item[2.] \verb+import foo+
+
+The traditional way a user includes software to a python based system
+would be the python {\tt import} command.
+This is fine for stable software, and can be installed with python's
+{\tt setuptools} in CASA. In the future CASA6 one should be able to use
+virtualenv to test out software like this without the need to write
+into CASA's personal space. One can also consider the use of using \verb+$PYTHONPATH+
+to point to the directory where {\tt foo.py} is present, but this method can
+easily conflict with other installation methods (in fact, is strongly discouraged
+in a CASA environment).
+
+%      foo.bar(1,'b',[1,2,3])
+
+\footnotesize
+\begin{verbatim}
+    foo.bar(1,'b',[1,2,3])
+\end{verbatim}
+\normalsize
+
+
+
+\item[3.] \verb+execfile('foo.py')+
+
+Will execute the code,  after which an API is available  (note this will not work in python3).
+This is the method we used in QAC. Notice that no command line parameters can be passed into
+the code.
+
+%        foo_bar(1,'b',[1,2,3])
+
+\footnotesize
+\begin{verbatim}
+    foo_bar(1,'b',[1,2,3])
+\end{verbatim}
+\normalsize
+
+
+Incidentally, if these are combined and only one script needs to be executed and then analyzed
+outside of CASA, a very efficient way it to use could be to call casa from the command line,
+e.g. directly from bash (or via a Makefile):
+
+\footnotesize
+\begin{verbatim}
+    % casa --nogui -c foo.py a=1 b='"b"' c='[1,2,3]' > foo.log 2&>1
+\end{verbatim}
+\normalsize
+
+The overhead of setting up CASA before this script really starts work
 varies a lot depending on cashing and what's in the casa init files, but can
-be anywhere from 5 to 20 seconds, comparable to booting a laptop.
-
-The installation of CASA is required to run QAC, and the user can opt either to install a version
-of CASA from within QAC, or assume a version of CASA that is present on the system, i.e. there
-is a command called ``casa''.
+be anywhere from 5 to 20 seconds. If many of these scripts are to be run, and each
+only takes a short time, the overhead is too large, and 
 
 
 
 
-  \item \verb+import foo+ 
 
-    this is fine for stable software, and can be installed with python's setuptools in casa
-    In future casa6 one should be able to use virtualenv to test out software like this
-    without the need to write into CASA's personal space.
+\item[4.]  \verb+run foo.py p1 p2 p3+
 
-  \item \verb+execfile('foo.py')+ 
+Since CASA is essentially an ipython shell, the {\tt run} command can be used to execute
+a scripting, including conveniently parsing ``command line arguments''.
+This will need a parser for \verb+p1=sys.argv[1]+, \verb+p2=sys.argv[2]+, etc.
+note this is an ipython interface, not python, though it's similar to
+running in the unix shell \verb+python foo.py p1 p2 p3+, but note this is different
+from the CASA method where local python variables can directly be set via the commandline
+without the need for a parser.
 
-    after which an API is available  (note this will not work on Python3)
+\footnotesize
+\begin{verbatim}
+    run foo.py 1  'b'  [1,2,3]
+\end{verbatim}
+\normalsize
 
-  \item  \verb+run foo.py p1 p2 p3+ 
-
-    this will need a parser for sys.argv[1] (p1), sys.argv[2] (p2), etc.
-    note this is an ipython interface, not python, though it's similar to
-    running in the unix shell \verb+python foo.py p1 p2 p3+
                            
-  \item   \verb+%run -m foo+
+\item[5.]   \verb+%run -m foo+
 
-    Runs the foo module (from sys.path). In the current casa manipulating sys.path is
-    not  recommended
+Runs the foo module (from sys.path). In the current CASA manipulating
+{\tt sys.path} is not recommended, the arguments similar to those of not
+using \verb+$PYTHONPATH+
 
-  \end{itemize}
+\end{itemize}
 
 Miles Lucas made his summer-2019 toolkit Radio Imaging Combination Analysis (RIKA)
-available\footnote{\url{https://gitlab.com/mileslucas/RICA}}. He uses the 3rd (run) method.
-In QAC we decided to use the 2nd (execfile) method.
+available\footnote{\url{https://gitlab.com/mileslucas/RICA}}. He uses the 4th ({\tt run}) method.
+In QAC we decided to use the 3rd ({\tt execfile}) method.
 
 
+\subsection{Installing QAC}
+
+QAC needs CASA to be installed, and the user can opt either to install a version
+of CASA from within QAC, or assume a version of CASA that is present on the system, i.e. there
+is a existing command called ``casa''. Since CASA startup can be controlled by
+\verb+~/.casa/init.py+ we choose this file to {\tt execfile} the correct startup script,
+aptly named {\tt casa.init.py} in the QAC distribution:
+
+
+\begin{verbatim}
+    execfile(os.environ['HOME'] + '/.casa/QAC/casa.init.py')
+\end{verbatim}
+
+\noindent
+There are a few examples of common packages loaded by CASA in {\tt casa.init.py}
+
+\section{Design Issues}
+
+QAC needs to be lightweight, easy to install
+
+\begin{itemize}
+
+\item
+  Easy to install, ideally a one liner
+
+\item
+  Easy to pass parameters into functions of scripts
+
+\item
+  Consistent naming convention of functions and parameters
+  
+\end{itemize}
 
 \section{Example}
 
@@ -225,9 +302,11 @@ But you must start and end your code as follows:
 
 ## Simulation routines
 
-As mentioned before,the project directory is within which all the work occurs. Some routines will accumulate
-(e.g. qac_vla()), others will remove that project directory and rebuild that directory (e.g. qac_clean1). The
-user will remember to orchestrate them inside each where needed, e.g.
+As mentioned before,the project directory is within which all the work
+occurs. Some routines will accumulate (e.g. qac_vla()), others will
+remove that project directory and rebuild that directory
+(e.g. qac_clean1). The user will remember to orchestrate them inside
+each where needed, e.g.
 
     qac_vla("test1", cfg=0, ...
     qac_clean1("test1/clean0", ...
@@ -241,8 +320,10 @@ user will remember to orchestrate them inside each where needed, e.g.
 
 ### qac_vla(project, skymodel, imsize, pixel, phasecenter, freq, cfg, ptg, noise)
 
-This is usually how you start a simulation, from a skymodel you create a measurement set reprenting a configuration.
-Since the ngVLA can have multiple configurations, you would need call this routine multiple times, e.g.
+This is usually how you start a simulation, from a skymodel you create
+ a measurement set reprenting a configuration.  Since the ngVLA can
+ have multiple configurations, you would need call this routine
+ multiple times, e.g.
 
     qac_vla("test1", cfg=0, ...)
     qac_vla("test2", cfg=0, ...)
@@ -275,19 +356,23 @@ qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, ptg=N
 
 ### qac_alma(project, skymodel, imsize, pixel, phasecenter, freq, cycle, cfg, ptg)
 
-Just for kicks, we have way to create ALMA observations from diffent cycle's and cfg's. We automatically add
-a visweightscale to the WEIGHT column to properly account for the dish size if you do a combination tclean.
+Just for kicks, we have way to create ALMA observations from diffent
+ cycle's and cfg's. We automatically add a visweightscale to the
+ WEIGHT column to properly account for the dish size if you do a
+ combination tclean.
 
 ### qac_noise(noise, *args, **kwargs)
 
-In the case where you want to empirically set the noise to a certain level, this routine will help you determine
-the proper scaling factor for the sm.setnoise() function in simulation tool. So far
-this is only used in qac_vla()
+In the case where you want to empirically set the noise to a certain
+ level, this routine will help you determine the proper scaling factor
+ for the sm.setnoise() function in simulation tool. So far this is
+ only used in qac_vla()
 
 ### qac_clean1(project, ms, imsize, pixel, niter, weighting, startmodel, phasecenter, **line)
 
-This is simply a front end to CASA's **tclean()**. Interesting note is that **niter** can be a list here,
-e.g. niter=[0,1000,2000], thus creating a series of dirtymaps, showing the progression of clean.
+This is simply a front end to CASA's **tclean()**. Interesting note is
+ that **niter** can be a list here, e.g. niter=[0,1000,2000], thus
+ creating a series of dirtymaps, showing the progression of clean.
 
 [**tclean()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_tclean/about)
 
@@ -314,12 +399,14 @@ qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting='natural', sta
 Create the OTF map via a simple smooth.
 
 NOTE: **simobserve** also has an **obsmode=sd** keyword, which creates
-a Measurement Set representing the autocorrelations of a TP (sd) map. After this you would need to map
-this MS into a casa image, using the
-[**sdimaging()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_sdimaging/about)
-task.
+ a Measurement Set representing the autocorrelations of a TP (sd)
+ map. After this you would need to map this MS into a casa image,
+ using the
+ [**sdimaging()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_sdimaging/about)
+ task.
 
-See Mangum et al.'s (2007) paper : https://www.aanda.org/articles/aa/pdf/2007/41/aa7811-07.pdf
+See Mangum et al.'s (2007) paper :
+ https://www.aanda.org/articles/aa/pdf/2007/41/aa7811-07.pdf
 
 ### qac_tp_vis(project, imagename, ptg, pixel, niter, phasecenter, rms, maxuv, nvgrp, fix, deconv, **line)
 
@@ -347,8 +434,9 @@ Smooth a skymodel so it can be compared to a (feathered for now) map.
 
 ### qac_tpdish
 
-This will depend on fixing the vpmanager interface to tp2vis, but this is where you define a new dish size
-to override the default ALMA 12m model
+This will depend on fixing the vpmanager interface to tp2vis, but this
+ is where you define a new dish size to override the default ALMA 12m
+ model
 
 ### qac_phasecenter
 
@@ -368,12 +456,13 @@ Just a super simple front-end to immath, so we can wrote code such as
 
     qac_math(out, in1, '+', in2)
 
-it only allows the four basic operators combining two maps. Partially driven because immath
-does not have the overwrite=True option.
+it only allows the four basic operators combining two maps. Partially
+ driven because immath does not have the overwrite=True option.
 
 ### qac_mom
 
-Compute moments 0,1 (and soon 2) in some standard way, so we can compare simulations and skymodels.
+Compute moments 0,1 (and soon 2) in some standard way, so we can
+ compare simulations and skymodels.
 
 [**immoments()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_immoments)
 
@@ -383,8 +472,8 @@ Create a simple colorimage from a casa imasge. By default it appends "png" to th
 
 ### qac_flux(image, box, dv, plot)
 
-Create a plot showing flux as function of channel. Good to compare flux comparisons
-between various simulations and skymodels.
+Create a plot showing flux as function of channel. Good to compare
+ flux comparisons between various simulations and skymodels.
 
 ### qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidelityim=None, absmodelim=None, interactive=False)
 
@@ -422,7 +511,8 @@ and loop over many parameters, e.g.
 \end{verbatim}
 \normalsize
 
-As one of the products of the ``tp2vis'' ALMA development study (Teuben 2019) we continued the development of the
+As one of the products of the ``tp2vis'' ALMA development study (\citet{tp2vis})
+we continued the development of the
 Quick Array Combination (QAC) toolkit that simplifies writing some of these complex scripts. It also allow us
 to use a different combination
 method (feather, tp2vis, ssc etc.) with minimal changes to the simulations scripts.
