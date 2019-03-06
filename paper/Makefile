@@ -1,6 +1,11 @@
 #
 
 
+qac0:
+	pdflatex memo59.tex
+	bibtex memo59
+	pdflatex memo59.tex
+
 #
 qac:
 	latex memo59.tex
