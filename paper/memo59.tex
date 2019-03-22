@@ -71,12 +71,17 @@ for example are ideal for array design studies.
 
 The development of QAC started in 2017 with the TP2VIS project \citep{tp2vis}, to provide a
 more easily programmable interface, orchestrate simulations and provide a
-reproducable baseline. It can be obtained from \url{https://github.com/teuben/QAC}.
+reproducable baseline using regressions. It can be obtained from \url{https://github.com/teuben/QAC}.
 
 We first summarize the different methods how CASA can be extended by using your own
 custum built python code, then how QAC is installed, and a typical usage. We also give a short
 summary of the API, and publish a benchmark in the Appendix. Given that QAC is available
 in github, you will likely find updates to QAC (and this memo) in this repository.
+
+So why tinker with CASA. Several efforts have been going on. E.g. casanova
+\footnote{\url{https://github.com/kaspervd/casanova}}
+
+
 
 \section{Running python code in CASA}
 
@@ -210,7 +215,7 @@ There are a few examples of common packages loaded by CASA in {\tt casa.init.py}
 
 \section{Design Issues}
 
-QAC needs to be lightweight, easy to install
+QAC needs to be lightweight, easy to install,
 
 \begin{itemize}
 
@@ -222,8 +227,25 @@ QAC needs to be lightweight, easy to install
 
 \item
   Consistent naming convention of functions and parameters
+
+\item
+  Procedural. Although python has great support for a object oriented
+  programming style, and plenty is used under the hood in CASA, for
+  this simple interface a simple procedural path was chosen.
+
+\item
+  clean vs. tclean. Although clean is formally not supported anymore, occasionally the two are compared, and
+  this gives that option. See \verb+qac_clean1(t=True,t=False)+
   
 \end{itemize}
+
+The use of a script with parameters is very useful for re-use, especially if the script also defines defaults. A huge
+drawback of the execfile approach is the lack to change these parameters. Add to this that execfile is not supported
+in python3, is a no-brainer not to use it, or at least switch to ``run''.
+
+execfile() sits in the same namespace.
+
+run runs a file as a program, whihc is like 'casa -c foo.py', and needs extra to get the casa bagage.
 
 \section{Example}
 
@@ -275,211 +297,72 @@ within QAC.
 
 \section{API}
 
-Here we list the most important functions available in QAC, and a brief explanation where needed. The full and updated
-documentation can be seen online on \url{https://github.com/teuben/QAC/blob/master/docs/qac.md}.
+Here we list the most important functions available in QAC, without
+further details except for arguably descriptive parameter names and
+defaults. The full and updated documentation can be seen online on
+\url{https://github.com/teuben/QAC/blob/master/docs/qac.md}.
 
 \footnotesize
 \begin{verbatim}
 
-## Logging
+## Adminstrativia
 
-Standard CASA logging is used, and you can use the python **print** function
-in the usual way.  You can use the function
+  qac_log(message, verbose=True)
 
-    qac_log(msg)
+  qac_version()
 
-to space your output with a header type message.
+  qac_begin(label='QAC', log=True, plot=False)
 
-Every qac_ command will tag the output with a timestamp, and optionally measure
-virtual and real memory. This is added to the standard python **logging** output.
-But you must start and end your code as follows:
-
-    qac_begin("test1-alma")
-    qac_version()
-    ....
-    qac_end()
-
+  qac_end()
 
 ## Simulation routines
 
-As mentioned before,the project directory is within which all the work
-occurs. Some routines will accumulate (e.g. qac_vla()), others will
-remove that project directory and rebuild that directory
-(e.g. qac_clean1). The user will remember to orchestrate them inside
-each where needed, e.g.
+  qac_vla(project, skymodel, imsize, pixel, phasecenter, freq, cfg, ptg, noise)
 
-    qac_vla("test1", cfg=0, ...
-    qac_clean1("test1/clean0", ...
-    
-    qac_vla("test1", cfg=1, ...
-    qac_clean1("test1/clean1", ...
+  qac_alma(project, skymodel, imsize, pixel, phasecenter, freq, cycle, cfg, ptg)
 
-    mslist = glob.glob("test1/*.ms")
-    qac_clean1("test1/clean2", mslist, ...)
+  qac_noise(noise, *args, **kwargs)
 
+  qac_clean1(project, ms, imsize, pixel, niter, weighting, startmodel, phasecenter, **line)
 
-### qac_vla(project, skymodel, imsize, pixel, phasecenter, freq, cfg, ptg, noise)
+  qac_tp_otf(project, skymodel, dish, label, freq, template)
 
-This is usually how you start a simulation, from a skymodel you create
- a measurement set reprenting a configuration.  Since the ngVLA can
- have multiple configurations, you would need call this routine
- multiple times, e.g.
+  qac_tp_vis(project, imagename, ptg, pixel, niter, phasecenter, rms, maxuv, nvgrp, fix,
+             deconv, **line)
 
-    qac_vla("test1", cfg=0, ...)
-    qac_vla("test2", cfg=0, ...)
+  qac_feather(project, highres, lowres, label, niteridx)
 
-Setting different  weights based on dish sizes will need to be implemented. See also qac_alma(). See also
-[**simobserve()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_simobserve/about)
+  qac_ssc(project, highres, lowres)
 
-#### input parameters:
-```python
-qac_vla(project, skymodel, imsize=512, pixel=0.5, phasecenter=None, cfg=1, ptg=None, times=[0.3333333333333333, 1], fix=0, noise=0)
-    """
-    project     str         working directory for the simulation
-    skymodel    str         input image used as a model of the sky. can be CASA image or FITS file
-    imsize      int/float   desired skymodel image size in pixels i.e. 512, 1024, 2048, 4096, etc.
-    pixel       int/float   desired skymodel pixel size in arcsecs i.e. 1" per pixel, 0.5" per pixel,   etc.
-    phasecenter str         the central direction to place the sky model image, or "" or None to use    whatever is in the image already.
-    cfg         int         desired ngVLA configuration:
-                                        # ant   cfg_name            extent  comments
-                            cfg = 0     19      ngvla-sba-revB      < 60m   6m dishes
-                            cfg = 1     94      ngvla-core-revB     < 1km
-                            cfg = 2     214     ngvla-plains-revB   < 30km 
-                            cfg = 3     225     ngvla-gb-vlba-revB  <       [+ 5 25m VLBI dishes, +5 18m    at GBO]
-    ptg         str         filename of the pointing file which can be created by qac_im_ptg
-    times       list        observation lengths and integration intervals in a list of length 2. times[ 0] = total observation length in hours, times[1] = interval for each integration in seconds. e.g. 4  hour observation with 1 second integrations: times = [4, 1]
-    fix         int         if fix=1, removes pointing table. fix=0 is default
-    noise       int/float   desired simplenoise (in Jy) to add to the measurement set. default noise=0,     no noise added
-    
-    """
-```
-
-### qac_alma(project, skymodel, imsize, pixel, phasecenter, freq, cycle, cfg, ptg)
-
-Just for kicks, we have way to create ALMA observations from diffent
- cycle's and cfg's. We automatically add a visweightscale to the
- WEIGHT column to properly account for the dish size if you do a
- combination tclean.
-
-### qac_noise(noise, *args, **kwargs)
-
-In the case where you want to empirically set the noise to a certain
- level, this routine will help you determine the proper scaling factor
- for the sm.setnoise() function in simulation tool. So far this is
- only used in qac_vla()
-
-### qac_clean1(project, ms, imsize, pixel, niter, weighting, startmodel, phasecenter, **line)
-
-This is simply a front end to CASA's **tclean()**. Interesting note is
- that **niter** can be a list here, e.g. niter=[0,1000,2000], thus
- creating a series of dirtymaps, showing the progression of clean.
-
-[**tclean()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_tclean/about)
-
-#### input parameters:
-```python
-qac_clean1(project, ms, imsize=512, pixel=0.5, niter=0, weighting='natural', startmodel='', phasecenter='', t=True, **line)
-    """
-    project     str         new working directly as it will be removed before starting
-    ms          str         input measurement set to be cleaned. can be single MS or a list
-    imsize      int/float   image size in pixels used in the imaging
-    pixel       int/float   pixel size in arcsecs used in the imaging
-    niter       int         iterations for cleaning. can be single number or a list. niter = 0, no  cleaning done, outputs dirty image
-    weighting   str         options for data weighting: natural, uniform, or robust
-    startmodel  str         starting model in Jy/pixel
-    phasecenter str         mapping center
-    t           bool        True means tclean. False means try and fallback to old clean()
-    **line                  user can provide any other (t)clean parameters like restfreq or width here
-    
-    """
-```
-
-### qac_tp_otf(project, skymodel, dish, label, freq, template)
-
-Create the OTF map via a simple smooth.
-
-NOTE: **simobserve** also has an **obsmode=sd** keyword, which creates
- a Measurement Set representing the autocorrelations of a TP (sd)
- map. After this you would need to map this MS into a casa image,
- using the
- [**sdimaging()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_sdimaging/about)
- task.
-
-See Mangum et al.'s (2007) paper :
- https://www.aanda.org/articles/aa/pdf/2007/41/aa7811-07.pdf
-
-### qac_tp_vis(project, imagename, ptg, pixel, niter, phasecenter, rms, maxuv, nvgrp, fix, deconv, **line)
-
-TP2VIS method. Not covering here yet. Like qac_alma(), you can reset the pixel size here.
-
-
-### qac_feather(project, highres, lowres, label, niteridx)
-
-Feather two maps that were created from qac_clean1 and qac_tp_otf
-
-### qac_ssc(project, highres, lowres)
-
-
-
-### qac_smooth(project, skymodel, label, niteridx)
-
-Smooth a skymodel so it can be compared to a (feathered for now) map.
+  qac_smooth(project, skymodel, label, niteridx)
 
 
 ## Helper routines
 
-### qac_stats
+  qac_stats(image, test=None, eps=None, box=None, pb=None, pbcut=0.8, edge=False)
 
-### qac_beam
+  qac_beam(im, normalized=True, chan=-1, plot=None)
 
-### qac_tpdish
+  qac_tpdish(ptg, ptgfile=None)
 
-This will depend on fixing the vpmanager interface to tp2vis, but this
- is where you define a new dish size to override the default ALMA 12m
- model
+  qac_phasecenter(im)
 
-### qac_phasecenter
+  qac_ptg(ptg, ptgfile=None)
 
-### qac_ptg
+  qtp_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None)
 
-We should re-import the qac_im_ptg routine from qtp. See below.
+  qac_summary(tp, ms=None, source=None, line=False)
 
-### qtp_im_ptg(phasecenter, imsize, pixel, grid, im=[], rect=False, outfile=None)
+  qac_math(outfile, infile1, oper, infile2)
 
-this should possibly become an qac_im_ptg 
+  qac_mom(imcube, chan_rms, pb=None, pbcut=0.3, rms=None)
 
-### qac_summary
+  qac_plot(image, channel=0, box=None, range=None, mode=0, title=None, plot=None)
 
-### qac_math
+  qac_flux(image, box=None, dv=1.0, plot='qac_flux.png')
 
-Just a super simple front-end to immath, so we can wrote code such as
-
-    qac_math(out, in1, '+', in2)
-
-it only allows the four basic operators combining two maps. Partially
- driven because immath does not have the overwrite=True option.
-
-### qac_mom
-
-Compute moments 0,1 (and soon 2) in some standard way, so we can
- compare simulations and skymodels.
-
-[**immoments()**](https://casa.nrao.edu/casadocs/latest/global-task-list/task_immoments)
-
-### qac_plot(image, box, plot)
-
-Create a simple colorimage from a casa imasge. By default it appends "png" to the current name.
-
-### qac_flux(image, box, dv, plot)
-
-Create a plot showing flux as function of channel. Good to compare
- flux comparisons between various simulations and skymodels.
-
-### qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidelityim=None, absmodelim=None, interactive=False)
-
-Calculates the fidelity between a model and observed image.
-
-
+  qac_fidelity(model, image, figure_mode=5, diffim=None, absdiffim=None, fidelityim=None,
+               absmodelim=None, interactive=False)
 
 \end{verbatim}
 \normalsize
